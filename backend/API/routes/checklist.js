@@ -1,15 +1,15 @@
 const express = require('express')
-const pool = require('./db')
+const pool = require('../db')
 const cors = require('cors');
-const router = express().Router();
+const router = express.Router();
 
 
 
 router.get('/checklist/:internId', async (req, res) => {
-  const { internid } = req.params;
+  const { internId } = req.params;
 
   try {
-    const result = await pool.query(
+  const result = await pool.query(
       `SELECT 
         ia.id as assignment_id,
         a.function_description,
@@ -20,7 +20,7 @@ router.get('/checklist/:internId', async (req, res) => {
       JOIN Activities a ON ia.id = a.id
       WHERE ia.participant_id = $1
       ORDER BY a.id
-    `);
+  `, [internId]);
     res.status(200).json(result.rows);
     } catch (err) {
       console.error('Error fetching checklist:', err);
@@ -53,4 +53,5 @@ router.post('/checklist/update/:activityId', async(req, res) => {
     console.error('Error updating activity:', err);
     res.status(500).json({ error: 'Database update failed' });
   }
-})
+});
+module.exports = router;

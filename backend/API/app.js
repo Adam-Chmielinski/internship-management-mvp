@@ -6,6 +6,7 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+const checklistRoutes = require('./routes/checklist');
 app.use('/API/checklist', checklistRoutes);
 
 app.get('/', (req, res) => {
