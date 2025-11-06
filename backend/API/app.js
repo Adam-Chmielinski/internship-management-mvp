@@ -6,6 +6,8 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+app.use('/API/checklist', checklistRoutes);
+
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
@@ -34,6 +36,8 @@ app.get('/getAllUsers', async (req, res) => {
     res.status(500).json({ error: 'Database insert failed' });
   }
 });*/
+
+
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
