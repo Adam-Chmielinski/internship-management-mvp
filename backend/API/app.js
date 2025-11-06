@@ -1,13 +1,14 @@
-const express = require('express')
-const pool = require('./db')
+const express = require('express');
+const pool = require('./db');
 const cors = require('cors');
-const app = express()
+const jwt = require('jsonwebtoken');
+const app = express();
 
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.send('Hello World!');
 })
 
 app.get('/getAllUsers', async (req, res) => {
@@ -19,6 +20,33 @@ app.get('/getAllUsers', async (req, res) => {
     res.status(500).json({ error: 'Database query failed' });
   }
 });
+
+app.get('/hrLogin', async(req, res) => {
+  const{email, password} = req.body;
+
+  try {
+    const hr = await pool.query('SELECT * FROM "HR"');
+
+    if (!hr || hr.password !== password) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { hrId: hr.id },
+      JWT_SECRET,
+      { expiresIn: '1h' }  // token ważny 1 godzinę
+    );
+
+
+    res.json({ 
+      token: token, 
+      id: hr.id
+      });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+})
 
 /*app.post('/addUser', async (req, res) => {
   const { name, email } = req.body;
