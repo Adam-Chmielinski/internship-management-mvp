@@ -40,7 +40,7 @@ router.get('/checklist/:internId', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        ia.id AS activity_id,
+        ia.id as assignment_id,
         a.function_description,
         a.activity_type,
         ia.status,
@@ -49,7 +49,7 @@ router.get('/checklist/:internId', async (req, res) => {
       JOIN "Activities" a ON ia.activity_id = a.id
       WHERE ia.participant_id = $1
       ORDER BY a.id
-    `, [internId]);
+  `, [internId]);
 
     res.json(result.rows);
   } catch (err) {
@@ -58,65 +58,177 @@ router.get('/checklist/:internId', async (req, res) => {
   }
 });
 
-router.patch('/approve/:internId', async (req, res) => {
-  const { internId } = req.params;
+router.patch('/:supervisorId/interns/:internId/approve', async (req, res) => {
+  const supervisorId = Number(req.params.supervisorId);
+  const internId = Number(req.params.internId);
+
+  if (!Number.isInteger(supervisorId) || !Number.isInteger(internId)) {
+    return res.status(400).json({ error: 'Invalid path parameters' });
+  }
+
+  // does approval needs all tasks completed
+  const enforceAllTasksCompleted = true;
 
   try {
-    const result = await pool.query(`
-      UPDATE "Interns"
+    const update = await pool.query(`
+      UPDATE "Interns" i
       SET tutor_final_approval = TRUE
+      WHERE i.id = $1
+        AND i.supervisor_id = $2
+        AND (i.tutor_final_approval IS DISTINCT FROM TRUE)
+        AND (
+          NOT $3
+          OR NOT EXISTS (
+              SELECT 1
+              FROM "Intern_Activities" ia
+              WHERE ia.participant_id = i.id
+                AND ia.status <> 'Completed'
+          )
+        )
+      RETURNING i.id, i.full_name, i.tutor_final_approval
+    `, [internId, supervisorId, enforceAllTasksCompleted]);
+
+    if (update.rowCount === 1) {
+      return res.json({
+        message: 'Internship approved successfully',
+        intern: update.rows[0]
+      });
+    }
+
+    // figure out why not working for better error reporting:
+    // does the intern exist
+    const internRes = await pool.query(`
+      SELECT id, supervisor_id, tutor_final_approval
+      FROM "Interns"
       WHERE id = $1
-      RETURNING *
     `, [internId]);
 
-    if (result.rows.length === 0)
-        return res.status(404).json({ error: 'Intern not found' });
+    if (internRes.rowCount === 0) {
+      return res.status(404).json({ error: 'Intern not found' });
+    }
 
-    res.json({ message: 'Internship approved successfully', intern: result.rows[0] });
+    const intern = internRes.rows[0];
+
+    // is intern assigned to this supervisor
+    if (Number(intern.supervisor_id) !== supervisorId) {
+      return res.status(403).json({ error: 'You are not authorized to approve this intern' });
+    }
+
+    // 5c) Already approved?
+    if (intern.tutor_final_approval === true) {
+      return res.status(409).json({ error: 'Internship already approved' });
+    }
+
+    // check if there are any remaining tasks if enforcement is on
+    if (enforceAllTasksCompleted) {
+      const remaining = await pool.query(`
+        SELECT COUNT(*)::int AS remaining
+        FROM "Intern_Activities"
+        WHERE participant_id = $1
+          AND status <> 'Completed'
+      `, [internId]);
+
+      if (remaining.rows[0].remaining > 0) {
+        return res.status(400).json({
+          error: 'Not all tasks are completed',
+          remainingTasks: remaining.rows[0].remaining
+        });
+      }
+    }
+    return res.status(400).json({ error: 'Approval could not be applied' });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to approve internship' });
+    console.error('Approve error:', err);
+    return res.status(500).json({ error: 'Failed to approve internship' });
   }
 });
 
-router.post('/report', async (req, res) => {
-    const { internId, tutorId, weekNum, tutorEvaluation } = req.body;
+// POST /supervisor/:supervisorId/interns/:internId/weekly
+// Body: { weekNum: number, tutorEvaluation: string }
+router.post('/:supervisorId/interns/:internId/weekly', async (req, res) => {
+  const supervisorId = Number(req.params.supervisorId);
+  const internId = Number(req.params.internId);
+  const weekNum = Number.parseInt(req.body.weekNum, 10);
+  const tutorEvaluation = (req.body.tutorEvaluation || '').trim();
 
-    if(!internId || !tutorId || !weekNum || !tutorEvaluation) {
-        return res.status(400).json({ error: 'Missing required fields' });
+  // 1) Payload and path validation up-front keeps queries clean and errors obvious
+  if (!Number.isInteger(supervisorId) || !Number.isInteger(internId)) {
+    return res.status(400).json({ error: 'Invalid path parameters' });
+  }
+  if (!Number.isInteger(weekNum) || weekNum < 1) {
+    return res.status(400).json({ error: 'weekNum must be a positive integer' });
+  }
+  if (!tutorEvaluation) {
+    return res.status(400).json({ error: 'tutorEvaluation is required' });
+  }
+
+  try {
+    // 2) Authorization: ensure this intern is actually assigned to this supervisor
+    //    Doing it in SQL (WHERE supervisor_id = $2) is stronger than a UI-only check.
+    const owns = await pool.query(`
+      SELECT 1
+      FROM "Interns"
+      WHERE id = $1 AND supervisor_id = $2
+    `, [internId, supervisorId]);
+
+    if (owns.rowCount === 0) {
+      // Could be 404 (hide existence) or 403 (explicit). Using 403 to be clear during dev.
+      return res.status(403).json({ error: 'You are not authorized to submit a report for this intern' });
     }
 
-    try {
-        const timeFrame =  await pool.query(`
-            SELECT ip.start_date, ip.end_date
-            WHERE ip.id = (SELECT program_id FROM "Interns" WHERE id = $1)
-            FROM "Internship_Programs" ip
-        `, [internId]);
+    // 3) Get program timeframe and compute allowed week range in the DB
+    //    Why in SQL? It avoids JS timezone quirks and keeps the source of truth in one place.
+    const tf = await pool.query(`
+      SELECT
+        ip.start_date,
+        ip.end_date,
+        CEIL(GREATEST(1, (ip.end_date::date - ip.start_date::date + 1)) / 7.0) AS total_weeks
+      FROM "Internship_Programs" ip
+      JOIN "Interns" i ON i.program_id = ip.id
+      WHERE i.id = $1
+    `, [internId]);
 
-        if(timeFrame.rows.length === 0) {
-            return res.status(404).json({ error: 'Intern or program not found' });
-        }
-
-        const startDate = new Date(timeFrame.rows[0].start_date);
-        const endDate = new Date(timeFrame.rows[0].end_date);
-        const totalWeeks = Math.ceil((endDate - startDate) / (7 * 24 * 60 * 60 * 1000));
-
-        if(weekNum < 1 || weekNum > totalWeeks) {
-            return res.status(400).json({ error: 'Invalid week number' });
-        }
-
-
-        const result = await pool.query(`
-            INSERT INTO "Weekly_Monitoring" (intern_id, tutor_id, week_num, tutor_evaluation)
-            VALUES ($1, $2, $3, $4)
-            RETURNING *
-        `, [internId, tutorId, weekNum, tutorEvaluation]);
-
-        res.status(201).json({ message: 'Weekly report submitted', report: result.rows[0] });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to submit weekly report' });
+    if (tf.rowCount === 0) {
+      return res.status(404).json({ error: 'Intern or program not found' });
     }
+
+    const totalWeeks = Number(tf.rows[0].total_weeks);
+    if (!Number.isFinite(totalWeeks) || totalWeeks < 1) {
+      return res.status(400).json({ error: 'Program has invalid dates (start/end)' });
+    }
+
+    if (weekNum < 1 || weekNum > totalWeeks) {
+      return res.status(400).json({
+        error: 'Invalid week number',
+        details: { weekNum, totalWeeks }
+      });
+    }
+
+    // 4) Insert or update the weekly report
+    //    We use ON CONFLICT on (intern_id, week_num) to prevent duplicates.
+    //    The unique index added above makes this possible.
+    const upsert = await pool.query(`
+      INSERT INTO "Weekly_Monitoring" (participant_id, tutor_id, week_num, tutor_evaluation)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (participant_id, week_num)
+      DO UPDATE SET
+        tutor_evaluation = EXCLUDED.tutor_evaluation,
+        tutor_id = EXCLUDED.tutor_id
+      RETURNING *
+    `, [internId, supervisorId, weekNum, tutorEvaluation]);
+
+    // 5) Clear, explicit response (201 for created or updated alike for simplicity)
+    return res.status(201).json({
+      message: 'Weekly report saved',
+      report: upsert.rows[0]
+    });
+
+  } catch (err) {
+    // If you forgot the unique index, ON CONFLICT throws:
+    //  "there is no unique or exclusion constraint matching the ON CONFLICT specification"
+    console.error('Weekly report error:', err);
+    return res.status(500).json({ error: 'Failed to submit weekly report' });
+  }
 });
 
 module.exports = router;
