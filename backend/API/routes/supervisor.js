@@ -7,20 +7,16 @@
 const express = require('express');
 const pool = require('../db');
 const cors = require('cors');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { authenticateToken } = require('../auth');
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // GET interns assigned to a supervisor
 router.get('/interns', async (req, res) => {
-  const authHeader = req.headers['authorization'];
-  console.log(authHeader);
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) return res.status(401).json({ error: 'Token missing' });
-
-  const decoded = jwt.verify(token, JWT_SECRET);
+  
+  const decoded = authenticateToken(req, res)
   console.log(decoded);
 
   try {
