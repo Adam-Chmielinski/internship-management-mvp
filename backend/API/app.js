@@ -16,6 +16,9 @@ app.use('/getAllUsers', allusersRoutes);
 const loginRoutes = require('./routes/login.js');
 app.use('/hrLogin', loginRoutes);
 
+const supervisorRoutes = require('./routes/supervisor.js');
+app.use('/supervisor', supervisorRoutes);
+
 app.get('/', (req, res) => {
   res.send('Hello World!');
 })
