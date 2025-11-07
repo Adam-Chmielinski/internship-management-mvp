@@ -1,8 +1,10 @@
 const express = require('express')
 const pool = require('../db')
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
+const JWT_SECRET = process.env.JWT_SECRET;
 
 router.post('/', async(req, res) => {
   var{email, password} = req.body;

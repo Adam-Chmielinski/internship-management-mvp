@@ -1,14 +1,12 @@
 const express = require('express');
 const pool = require('./db');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
 require('dotenv').config()
-const JWT_SECRET = process.env.JWT_SECRET;
 
 const checklistRoutes = require('./routes/checklist.js');
 app.use('/checklist', checklistRoutes);

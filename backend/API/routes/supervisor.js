@@ -7,19 +7,29 @@
 const express = require('express');
 const pool = require('../db');
 const cors = require('cors');
+const jwt = require('jsonwebtoken')
 const router = express.Router();
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
 // GET interns assigned to a supervisor
-router.get('/:supervisorId/interns', async (req, res) => {
-  const { supervisorId } = req.params;
+router.get('/interns', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  console.log(authHeader);
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Token missing' });
+
+  const decoded = jwt.verify(token, JWT_SECRET);
+  console.log(decoded);
 
   try {
     const result = await pool.query(`
       SELECT i.id, i.full_name, i.training_sector, prog.program_name, i.tutor_final_approval
       FROM "Interns" i
       JOIN "Internship_Programs" prog ON i.program_id = prog.id
-      WHERE i.supervisor_id = $1
-    `, [supervisorId]);
+      WHERE i.supervisor_id = $1`,
+      [decoded.userId]);
 
     res.json(result.rows);
   } catch (err) {
