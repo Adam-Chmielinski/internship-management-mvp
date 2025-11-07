@@ -34,6 +34,28 @@ router.get('/interns', async (req, res) => {
   }
 });
 
+router.get('/intern/:internId', async (req, res) => {
+  const { internId } = req.params;
+  
+  try {
+    const result = await pool.query(`
+      SELECT i.full_name, i.training_sector, prog.program_name
+      FROM "Interns" i
+      JOIN "Internship_Programs" prog ON i.program_id = prog.id
+      WHERE i.id = $1`,
+      [internId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Intern not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch intern details' });
+  }
+});
+
 router.get('/checklist/:internId', async (req, res) => {
   const { internId } = req.params;
 
@@ -145,11 +167,16 @@ router.patch('/:supervisorId/interns/:internId/approve', async (req, res) => {
 
 // POST /supervisor/:supervisorId/interns/:internId/weekly
 // Body: { weekNum: number, tutorEvaluation: string }
-router.post('/:supervisorId/interns/:internId/weekly', async (req, res) => {
-  const supervisorId = Number(req.params.supervisorId);
-  const internId = Number(req.params.internId);
-  const weekNum = Number.parseInt(req.body.weekNum, 10);
-  const tutorEvaluation = (req.body.tutorEvaluation || '').trim();
+router.post('/intern/weekly', async (req, res) => {
+    
+  const decoded = authenticateToken(req, res)
+  console.log(decoded);
+
+  const supervisorId = Number(decoded.userId);
+  const internId = Number(req.body.participantId);
+  //const weekNum = Number.parseInt(req.body.weekNum, 10);
+  const weekNum = 3; // temporarily hardcoded for testing
+  const tutorEvaluation = (req.body.evaluation || '').trim();
 
   // 1) Payload and path validation up-front keeps queries clean and errors obvious
   if (!Number.isInteger(supervisorId) || !Number.isInteger(internId)) {
