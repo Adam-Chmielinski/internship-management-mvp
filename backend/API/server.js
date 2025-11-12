@@ -10,7 +10,21 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Wczytaj tylko routery z folderu "routes"
+// 1️⃣ Wczytaj pliki z głównego katalogu (np. app.js, auth.js, db.js)
+const rootFolder = __dirname;
+
+fs.readdirSync(rootFolder).forEach(file => {
+  if (file === 'server.js' || file.startsWith('_') || !file.endsWith('.js')) return;
+  const filePath = path.join(rootFolder, file);
+  try {
+    require(filePath);
+    console.log(`✅ Załadowano moduł: ${file}`);
+  } catch (err) {
+    console.error(`❌ Błąd przy ładowaniu ${file}:`, err.message);
+  }
+});
+
+// 2️⃣ Wczytaj routery z folderu "routes"
 const routesFolder = path.join(__dirname, 'routes');
 
 if (fs.existsSync(routesFolder)) {
@@ -24,14 +38,14 @@ if (fs.existsSync(routesFolder)) {
       app.use(routeName, route);
       console.log(`✅ Loaded route: ${routeName}`);
     } else {
-      console.log(`ℹ️ Pominięto ${file} (brak routera Express)`);
+      console.log(`ℹ️ Pominięto ${file} (nie jest routerem Express)`);
     }
   });
 } else {
   console.log('⚠️ Folder "routes" nie istnieje – brak endpointów do załadowania.');
 }
 
-// Obsługa frontendu (np. React build)
+// 3️⃣ Obsługa frontendu (np. React build)
 const frontendPath = path.join(__dirname, '../../frontend/build');
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
