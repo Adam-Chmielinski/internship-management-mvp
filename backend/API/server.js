@@ -9,6 +9,7 @@ app.use(express.json());
 
 const apiFolder = __dirname;
 
+// 🔹 Automatyczne ładowanie routerów z folderu API
 fs.readdirSync(apiFolder).forEach(file => {
   if (file === 'server.js' || file.startsWith('_') || !file.endsWith('.js')) return;
 
@@ -23,7 +24,6 @@ fs.readdirSync(apiFolder).forEach(file => {
   }
 
   const routeName = '/api/' + path.basename(file, '.js');
-
   if (typeof route === 'function' || (route && typeof route === 'object' && 'use' in route)) {
     app.use(routeName, route);
     console.log(`✅ Załadowano endpoint: ${routeName}`);
@@ -32,8 +32,13 @@ fs.readdirSync(apiFolder).forEach(file => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.json({ message: '✅ API server is running!' });
+// 🔹 Serwowanie zbudowanego frontendu Reacta
+const frontendPath = path.join(__dirname, '../../frontend/build');
+app.use(express.static(frontendPath));
+
+// 🔹 Każdy inny request → index.html (dla React Routera)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 app.listen(port, () => {
