@@ -2,14 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ActivityChecklistReadOnly.css';
 import API_URL from '../Config/api';
+import { useParams } from 'react-router-dom';
 
-function ActivityChecklistReadOnly({ participantId, }) {
+function ActivityChecklistReadOnly() {
+  const { participantId } = useParams();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log(participantId);
     fetch(`${API_URL}/supervisor/checklist/${participantId}`)
       .then(res => res.json())
       .then(data => {

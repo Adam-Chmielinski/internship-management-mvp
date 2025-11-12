@@ -61,7 +61,6 @@ const Login = () => {
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <div className="input-wrapper">
-              <span className="input-icon">📧</span>
               <input
                 id="email"
                 type="email"
@@ -77,7 +76,6 @@ const Login = () => {
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <div className="input-wrapper">
-              <span className="input-icon">🔒</span>
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}

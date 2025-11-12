@@ -13,16 +13,47 @@ function ActivityChecklist({ participantId }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API_URL}/checklist/${participantId}`)
-      .then(res => res.json())
-      .then(data => {
-        setTasks(data);
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(`${API_URL}/checklist/${participantId || user?.id}`);
+        const data = await response.json();
+        
+        console.log('Raw tasks response:', data);
+        
+        // Ensure tasks is always an array
+        let tasksArray = [];
+        
+        // Handle different response formats
+        if (Array.isArray(data)) {
+          tasksArray = data;
+        } else if (data && typeof data === 'object') {
+          // Check for common response patterns
+          if (data.tasks && Array.isArray(data.tasks)) {
+            tasksArray = data.tasks;
+          } else if (data.data && Array.isArray(data.data)) {
+            tasksArray = data.data;
+          } else if (data.checklist && Array.isArray(data.checklist)) {
+            tasksArray = data.checklist;
+          } else {
+            // If it's an object with numbered keys, convert to array
+            tasksArray = Object.values(data).filter(item => 
+              item && typeof item === 'object' && 'assignment_id' in item
+            );
+          }
+        }
+        
+        console.log('Processed tasks array:', tasksArray);
+        setTasks(tasksArray);
         setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
+        console.error('Error fetching tasks:', err);
+        setTasks([]); // Set to empty array on error
         setLoading(false);
         alert('Error fetching tasks');
-      });
+      }
+    };
+
+    fetchTasks();
   }, [user?.id, participantId]);
 
   const handleStatusChange = (taskId, newStatus) => {
@@ -35,13 +66,14 @@ function ActivityChecklist({ participantId }) {
     })
       .then(res => {
         if (!res.ok) throw new Error('Failed to update');
-        setTasks(tasks =>
-          tasks.map(task =>
+        // Ensure tasks is an array before mapping
+        setTasks(currentTasks => {
+          if (!Array.isArray(currentTasks)) return [];
+          return currentTasks.map(task =>
             task.assignment_id === taskId ? { ...task, status: newStatus } : task
-          )
-        );
+          );
+        });
         if (newStatus === 'Completed') {
-          // Show success feedback
           setTimeout(() => {
             alert('Task marked as completed!');
           }, 100);
@@ -61,6 +93,9 @@ function ActivityChecklist({ participantId }) {
   };
 
   const getFilteredTasks = () => {
+    // Ensure tasks is an array before filtering
+    if (!Array.isArray(tasks)) return [];
+    
     switch(filter) {
       case 'completed':
         return tasks.filter(task => task.status === 'Completed');
@@ -74,17 +109,24 @@ function ActivityChecklist({ participantId }) {
   };
 
   const getTaskStats = () => {
+    // Ensure tasks is an array before filtering
+    if (!Array.isArray(tasks)) {
+      return { completed: 0, inProgress: 0, pending: 0, total: 0 };
+    }
+    
     const completed = tasks.filter(t => t.status === 'Completed').length;
     const inProgress = tasks.filter(t => t.status === 'In Progress' || t.status === 'In progress').length;
     const pending = tasks.filter(t => t.status === 'Pending').length;
     return { completed, inProgress, pending, total: tasks.length };
   };
 
-  if (loading) return (
-    <div className="tasks-page">
-      <div className="loading-container">Loading tasks...</div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="tasks-page">
+        <div className="loading-container">Loading tasks...</div>
+      </div>
+    );
+  }
 
   const filteredTasks = getFilteredTasks();
   const stats = getTaskStats();
@@ -153,7 +195,7 @@ function ActivityChecklist({ participantId }) {
 
       {/* Tasks List */}
       <div className="tasks-container">
-        {filteredTasks.length === 0 ? (
+        {!Array.isArray(filteredTasks) || filteredTasks.length === 0 ? (
           <div className="no-tasks">
             <p>No tasks found in this category.</p>
           </div>

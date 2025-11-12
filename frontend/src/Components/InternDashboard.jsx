@@ -7,11 +7,26 @@ import API_URL from '../Config/api';
 const InternDashboard = () => {
   const [internData, setInternData] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
+  const [documentType, setDocumentType] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Hardcoded document types
+  const documentTypes = [
+    'CV',
+    'Cover Letter',
+    'Academic Transcript',
+    'Certificate',
+    'ID Document',
+    'Recommendation Letter',
+    'Project Report',
+    'Training Agreement',
+    'Evaluation Form',
+    'Other'
+  ];
 
   useEffect(() => {
     fetchInternData();
@@ -62,14 +77,20 @@ const InternDashboard = () => {
       return;
     }
 
+    if (!documentType) {
+      setUploadStatus('Please select a document type');
+      return;
+    }
+
     const formData = new FormData();
+    formData.append('documentType', documentType);
     formData.append('document', uploadFile);
 
     try {
       setUploadStatus('Uploading...');
       const token = localStorage.getItem('token');
-      
-      const response = await fetch(`${API_URL}/documents/upload`, {
+      console.log(user.id);
+      const response = await fetch(`${API_URL}/documents/upload/${user.id}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -83,6 +104,9 @@ const InternDashboard = () => {
 
       setUploadStatus('✓ Document uploaded successfully!');
       setUploadFile(null);
+      setDocumentType('');
+      // Reset file input
+      document.getElementById('file-upload').value = '';
       // Clear success message after 3 seconds
       setTimeout(() => setUploadStatus(''), 3000);
       // Refresh data to show new document
@@ -120,96 +144,97 @@ const InternDashboard = () => {
 
   const { profile, progress, recentMonitoring, recentDocuments } = internData || {};
 
-return (
-  <div className="intern-dashboard">
-    <div className="dashboard-header">
-      <h1>Intern Dashboard</h1>
-      <p>Welcome, {profile?.full_name || 'Intern'}</p>
-      <button onClick={handleLogout} className="logout-btn">
-        🚪 Log Out
-      </button>
-    </div>
+  return (
+    <div className="intern-dashboard">
+      <div className="dashboard-header">
+        <h1>Intern Dashboard</h1>
+        <p>Welcome, {profile?.full_name || 'Intern'}</p>
+        <button onClick={handleLogout} className="logout-btn">
+          🚪 Log Out
+        </button>
+      </div>
 
-    <div className="dashboard-grid">
-      {/* Row 1 - Program Info and Progress */}
-      <div className="dashboard-card program-info-card">
-        <div className="card-icon">📚</div>
-        <h2 className="card-title">Internship Program</h2>
-        <div className="program-content">
-          <h3>{profile?.program?.name || 'Internship Program'}</h3>
-          <p className="training-sector">Training Sector: <strong>{profile?.training_sector || 'N/A'}</strong></p>
-          <div className="program-dates">
-            <div className="date-item">
-              <span className="date-label">Start Date</span>
-              <span className="date-value">{formatDate(profile?.program?.start_date)}</span>
-            </div>
-            <div className="date-item">
-              <span className="date-label">End Date</span>
-              <span className="date-value">{formatDate(profile?.program?.end_date)}</span>
+      <div className="dashboard-grid">
+        {/* Row 1 - Program Info and Progress */}
+        <div className="dashboard-card program-info-card">
+          <div className="card-icon">📚</div>
+          <h2 className="card-title">Internship Program</h2>
+          <div className="program-content">
+            <h3>{profile?.program?.name || 'Internship Program'}</h3>
+            <p className="training-sector">Training Sector: <strong>{profile?.training_sector || 'N/A'}</strong></p>
+            <div className="program-dates">
+              <div className="date-item">
+                <span className="date-label">Start Date</span>
+                <span className="date-value">{formatDate(profile?.program?.start_date)}</span>
+              </div>
+              <div className="date-item">
+                <span className="date-label">End Date</span>
+                <span className="date-value">{formatDate(profile?.program?.end_date)}</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="dashboard-card progress-card">
-        <div className="card-icon">📊</div>
-        <h2 className="card-title">Task Progress</h2>
-        <div className="progress-content">
-          <div className="task-progress-summary">
-            <div className="progress-circle-container">
-              <svg className="progress-ring" width="120" height="120">
-                <circle
-                  className="progress-ring-bg"
-                  strokeWidth="8"
-                  stroke="#e5e7eb"
-                  fill="transparent"
-                  r="52"
-                  cx="60"
-                  cy="60"
-                />
-                <circle
-                  className="progress-ring-fill"
-                  strokeWidth="8"
-                  stroke="url(#gradient)"
-                  fill="transparent"
-                  r="52"
-                  cx="60"
-                  cy="60"
-                  strokeDasharray={`${326.7 * ((progress?.percent || 0) / 100)} 326.7`}
-                  transform="rotate(-90 60 60)"
-                />
-                <defs>
-                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#667eea" />
-                    <stop offset="100%" stopColor="#764ba2" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="percentage-display">{progress?.percent || 0}%</div>
+        <div className="dashboard-card progress-card">
+          <div className="card-icon">📊</div>
+          <h2 className="card-title">Task Progress</h2>
+          <div className="progress-content">
+            <div className="task-progress-summary">
+              <div className="progress-circle-container">
+                <svg className="progress-ring" width="120" height="120">
+                  <circle
+                    className="progress-ring-bg"
+                    strokeWidth="8"
+                    stroke="#e5e7eb"
+                    fill="transparent"
+                    r="52"
+                    cx="60"
+                    cy="60"
+                  />
+                  <circle
+                    className="progress-ring-fill"
+                    strokeWidth="8"
+                    stroke="url(#gradient)"
+                    fill="transparent"
+                    r="52"
+                    cx="60"
+                    cy="60"
+                    strokeDasharray={`${326.7 * ((progress?.percent || 0) / 100)} 326.7`}
+                    transform="rotate(-90 60 60)"
+                  />
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#667eea" />
+                      <stop offset="100%" stopColor="#764ba2" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="percentage-display">{progress?.percent || 0}%</div>
+              </div>
+              <div className="task-stats-breakdown">
+                <div className="stat-row">
+                  <span className="stat-value completed">{progress?.completed_tasks || 0}</span>
+                  <span className="stat-label">Completed</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-value pending">{(progress?.total_tasks || 0) - (progress?.completed_tasks || 0)}</span>
+                  <span className="stat-label">Remaining</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-value total">{progress?.total_tasks || 0}</span>
+                  <span className="stat-label">Total Tasks</span>
+                </div>
+              </div>
             </div>
-            <div className="task-stats-breakdown">
-              <div className="stat-row">
-                <span className="stat-value completed">{progress?.completed_tasks || 0}</span>
-                <span className="stat-label">Completed</span>
-              </div>
-              <div className="stat-row">
-                <span className="stat-value pending">{(progress?.total_tasks || 0) - (progress?.completed_tasks || 0)}</span>
-                <span className="stat-label">Remaining</span>
-              </div>
-              <div className="stat-row">
-                <span className="stat-value total">{progress?.total_tasks || 0}</span>
-                <span className="stat-label">Total Tasks</span>
-              </div>
-            </div>
+            <p className="progress-summary-text">
+              {progress?.completed_tasks || 0} of {progress?.total_tasks || 0} tasks completed
+            </p>
+            <button onClick={navigateToTasks} className="view-tasks-btn">
+              View All Tasks →
+            </button>
           </div>
-          <p className="progress-summary-text">
-            {progress?.completed_tasks || 0} of {progress?.total_tasks || 0} tasks completed
-          </p>
-          <button onClick={navigateToTasks} className="view-tasks-btn">
-            View All Tasks →
-          </button>
         </div>
-      </div>
+
         {/* Row 2 - Supervisor Contact and Recent Evaluations */}
         <div className="dashboard-card supervisor-card">
           <div className="card-icon">👤</div>
@@ -261,21 +286,36 @@ return (
           <div className="card-icon">📄</div>
           <h2 className="card-title">Document Upload</h2>
           <form onSubmit={handleFileUpload} className="upload-form">
-            <div className="file-input-wrapper">
-              <input
-                type="file"
-                id="file-upload"
-                className="file-input"
-                onChange={(e) => setUploadFile(e.target.files[0])}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              />
-              <label htmlFor="file-upload" className="file-label">
-                {uploadFile ? uploadFile.name : 'Choose a file to upload...'}
-              </label>
+            <div className="upload-inputs">
+              <div className="document-type-wrapper">
+                <select
+                  value={documentType}
+                  onChange={(e) => setDocumentType(e.target.value)}
+                  className="document-type-select"
+                  required
+                >
+                  <option value="">Select document type...</option>
+                  {documentTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="file-input-wrapper">
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="file-input"
+                  onChange={(e) => setUploadFile(e.target.files[0])}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                />
+                <label htmlFor="file-upload" className="file-label">
+                  {uploadFile ? uploadFile.name : 'Choose a file...'}
+                </label>
+              </div>
+              <button type="submit" className="upload-btn">
+                📤 Upload
+              </button>
             </div>
-            <button type="submit" className="upload-btn">
-              📤 Upload Document
-            </button>
             {uploadStatus && (
               <div className={`upload-status ${uploadStatus.includes('✓') ? 'success' : uploadStatus.includes('✗') ? 'error' : ''}`}>
                 {uploadStatus}
@@ -288,7 +328,8 @@ return (
               <ul>
                 {recentDocuments.slice(0, 3).map((doc) => (
                   <li key={doc.id}>
-                    {doc.doc_type} - {formatDate(doc.upload_date)}
+                    <span className="doc-type-badge">{doc.doc_type}</span>
+                    <span className="doc-date">{formatDate(doc.upload_date)}</span>
                   </li>
                 ))}
               </ul>

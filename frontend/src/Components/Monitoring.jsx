@@ -99,22 +99,54 @@ const Monitoring = () => {
   };
 
   const fetchDocuments = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/documents/${participantId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+  try {
+    const token = localStorage.getItem('token');
+    console.log('Fetching documents for participantId:', participantId);
+    
+    const response = await fetch(`${API_URL}/documents/${participantId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Raw documents response:', data);
       
-      if (response.ok) {
-        const data = await response.json();
-        setDocuments(Array.isArray(data) ? data : []);
+      // Handle different response formats
+      let documentsArray = [];
+      
+      // If data is already an array
+      if (Array.isArray(data)) {
+        documentsArray = data;
       }
-    } catch (error) {
-      console.error('Error fetching documents:', error);
+      // If data is an object with numbered keys (like {0: {...}, 1: {...}})
+      else if (typeof data === 'object' && data !== null) {
+        // Check if it has a documents property
+        if (data.documents && Array.isArray(data.documents)) {
+          documentsArray = data.documents;
+        }
+        // Check if it has a data property
+        else if (data.data && Array.isArray(data.data)) {
+          documentsArray = data.data;
+        }
+        // Convert object with numbered keys to array
+        else {
+          documentsArray = Object.values(data);
+        }
+      }
+      
+      console.log('Processed documents array:', documentsArray);
+      setDocuments(documentsArray);
+    } else {
+      console.error('Failed to fetch documents, status:', response.status);
+      setDocuments([]);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    setDocuments([]);
+  }
+};
 
   const fetchEvaluationHistory = async () => {
     try {
@@ -198,10 +230,10 @@ const Monitoring = () => {
     }
   };
 
-  const handleDownload = async (documentId, fileName) => {
+    const handleDownload = async (documentId, docType) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/document/download/${documentId}`, {
+      const response = await fetch(`${API_URL}/documents/download/${documentId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -212,11 +244,15 @@ const Monitoring = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = fileName || 'document';
+        // Generate filename based on doc type and current date
+        const fileName = `${docType.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+      } else {
+        throw new Error('Download failed');
       }
     } catch (error) {
       alert('Error downloading document');
@@ -226,6 +262,7 @@ const Monitoring = () => {
 
   const handleViewTasks = () => {
     navigate(`/supervisorChecklist/${participantId}`);
+    console.log(participantId);
   };
 
   const handleLogout = () => {
@@ -253,6 +290,23 @@ const Monitoring = () => {
       </div>
     );
   }
+    // Helper function to get appropriate icon based on document type
+  const getDocumentIcon = (docType) => {
+    const iconMap = {
+      'CV': '📋',
+      'Cover Letter': '✉️',
+      'Academic Transcript': '🎓',
+      'Certificate': '🏆',
+      'ID Document': '🆔',
+      'Recommendation Letter': '📨',
+      'Project Report': '📊',
+      'Training Agreement': '📝',
+      'Evaluation Form': '✅',
+      'Final Report': '📑',
+      'Other': '📄'
+    };
+    return iconMap[docType] || '📄';
+  };
 
   return (
     <div className="monitoring-page">
@@ -418,7 +472,7 @@ const Monitoring = () => {
           )}
         </div>
 
-        <div className="monitoring-card documents-card">
+         <div className="monitoring-card documents-card">
           <div className="card-icon">📁</div>
           <h3 className="card-title">Uploaded Documents</h3>
           {documents.length === 0 ? (
@@ -428,14 +482,16 @@ const Monitoring = () => {
               {documents.map((doc) => (
                 <div key={doc.id} className="document-item">
                   <div className="document-info">
-                    <span className="document-icon">📄</span>
+                    <span className="document-icon">
+                      {getDocumentIcon(doc.doc_type)}
+                    </span>
                     <div className="document-details">
-                      <span className="document-name">{doc.name || doc.fileName}</span>
-                      <span className="document-date">{formatDate(doc.uploadDate || doc.createdAt)}</span>
+                      <span className="document-type-badge">{doc.doc_type}</span>
+                      <span className="document-date">Uploaded: {formatDate(doc.upload_date)}</span>
                     </div>
                   </div>
                   <button
-                    onClick={() => handleDownload(doc.id, doc.name)}
+                    onClick={() => handleDownload(doc.id, doc.doc_type)}
                     className="download-btn"
                   >
                     Download
