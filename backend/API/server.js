@@ -13,18 +13,29 @@ fs.readdirSync(apiFolder).forEach(file => {
   if (file === 'server.js' || file.startsWith('_') || !file.endsWith('.js')) return;
 
   const filePath = path.join(apiFolder, file);
-  const route = require(filePath);
+  let route;
+
+  try {
+    route = require(filePath);
+  } catch (err) {
+    console.error(`❌ Błąd przy ładowaniu ${file}:`, err.message);
+    return;
+  }
 
   const routeName = '/api/' + path.basename(file, '.js');
-  app.use(routeName, route);
 
-  console.log(`Loaded endpoint: ${routeName}`);
+  if (typeof route === 'function' || (route && typeof route === 'object' && 'use' in route)) {
+    app.use(routeName, route);
+    console.log(`✅ Załadowano endpoint: ${routeName}`);
+  } else {
+    console.warn(`⚠️ Pominięto ${file} — nie jest poprawnym routerem Express`);
+  }
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: 'API server is running!' });
+  res.json({ message: '✅ API server is running!' });
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`🚀 Server is running on port ${port}`);
 });
