@@ -11,6 +11,7 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 
 const rootFolder = __dirname;
+
 fs.readdirSync(rootFolder).forEach(file => {
   if (file === 'server.js' || !file.endsWith('.js') || file.startsWith('_')) return;
   const filePath = path.join(rootFolder, file);
@@ -23,21 +24,18 @@ fs.readdirSync(rootFolder).forEach(file => {
 });
 
 const routesFolder = path.join(__dirname, 'routes');
+
 if (fs.existsSync(routesFolder)) {
   fs.readdirSync(routesFolder).forEach(file => {
     if (!file.endsWith('.js') || file.startsWith('_')) return;
     const filePath = path.join(routesFolder, file);
     try {
       const route = require(filePath);
-      if (typeof route === 'function' || (route && route.handle && route.use)) {
-        const routeName = '/api/' + path.basename(file, '.js');
-        app.use(routeName, route);
-        console.log(`✅ Loaded route: ${routeName}`);
-      } else {
-        console.log(`ℹ️ Skipped ${file} (not a valid Express router)`);
-      }
+      const routeName = '/api/' + path.basename(file, '.js');
+      app.use(routeName, route);
+      console.log(`✅ Loaded route/module: ${file} → ${routeName}`);
     } catch (err) {
-      console.error(`❌ Failed to load route ${file}: ${err.message}`);
+      console.error(`❌ Failed to load route/module ${file}: ${err.message}`);
     }
   });
 } else {
@@ -45,9 +43,10 @@ if (fs.existsSync(routesFolder)) {
 }
 
 const frontendPath = path.join(__dirname, '../../frontend/build');
+
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
-  app.use((req, res) => {
+  app.get('*', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
