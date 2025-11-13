@@ -38,4 +38,24 @@ if (fs.existsSync(routesFolder)) {
 
     if (route && route.use && route.handle) {
       const routeName = '/api/' + path.basename(file, '.js');
-      app.use(routeName, rout
+      app.use(routeName, route);
+      console.log(`✅ Loaded route: ${routeName}`);
+    } else {
+      console.log(`ℹ️ Pominięto ${file} (brak routera Express)`);
+    }
+  });
+} else {
+  console.log('⚠️ Folder "routes" nie istnieje – brak endpointów do załadowania.');
+}
+
+const frontendPath = path.join(__dirname, '../../frontend/build');
+if (fs.existsSync(frontendPath)) {
+  app.use(express.static(frontendPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
+
+app.listen(port, () => {
+  console.log(`🚀 Server is running on port ${port}`);
+});
