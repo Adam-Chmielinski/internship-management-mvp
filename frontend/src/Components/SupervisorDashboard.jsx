@@ -92,9 +92,6 @@ const SupervisorDashboard = () => {
                   <p className="participant-sector">
                     Sector: {participant.training_sector || 'Not assigned'}
                   </p>
-                  <span className="participant-status">
-                    {participant.status || 'Active'}
-                  </span>
                 </div>
                 <div className="participant-arrow">→</div>
               </div>

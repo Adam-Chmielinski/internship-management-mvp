@@ -25,6 +25,10 @@ function ActivityChecklistReadOnly() {
       });
   }, [participantId]);
 
+  const handleGoBack = () => {
+    navigate(`/monitoring/${participantId}`);
+  };
+
   const getFilteredTasks = () => {
     switch(filter) {
       case 'completed':
@@ -57,6 +61,9 @@ function ActivityChecklistReadOnly() {
   if (!tasks.length) {
     return (
       <div className="checklist-readonly-container">
+        <button onClick={handleGoBack} className="back-to-monitoring-btn">
+          ← Back to Monitoring
+        </button>
         <div className="empty-message">No tasks assigned to this intern.</div>
       </div>
     );
@@ -67,6 +74,11 @@ function ActivityChecklistReadOnly() {
 
   return (
     <div className="checklist-readonly-container">
+      {/* Back Button */}
+      <button onClick={handleGoBack} className="back-to-monitoring-btn">
+        ← Back to Monitoring
+      </button>
+
       {/* Task Stats Overview */}
       <div className="task-stats-grid">
         <div className="task-stat-card">

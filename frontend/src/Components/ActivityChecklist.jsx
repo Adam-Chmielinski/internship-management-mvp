@@ -13,47 +13,22 @@ function ActivityChecklist({ participantId }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await fetch(`${API_URL}/checklist/${participantId || user?.id}`);
-        const data = await response.json();
-        
-        console.log('Raw tasks response:', data);
-        
-        // Ensure tasks is always an array
-        let tasksArray = [];
-        
-        // Handle different response formats
-        if (Array.isArray(data)) {
-          tasksArray = data;
-        } else if (data && typeof data === 'object') {
-          // Check for common response patterns
-          if (data.tasks && Array.isArray(data.tasks)) {
-            tasksArray = data.tasks;
-          } else if (data.data && Array.isArray(data.data)) {
-            tasksArray = data.data;
-          } else if (data.checklist && Array.isArray(data.checklist)) {
-            tasksArray = data.checklist;
-          } else {
-            // If it's an object with numbered keys, convert to array
-            tasksArray = Object.values(data).filter(item => 
-              item && typeof item === 'object' && 'assignment_id' in item
-            );
-          }
-        }
-        
-        console.log('Processed tasks array:', tasksArray);
-        setTasks(tasksArray);
+    // Use the same approach as supervisor view
+    const internId = participantId || user?.id;
+    console.log('Fetching tasks for intern ID:', internId);
+    
+    fetch(`${API_URL}/supervisor/checklist/${internId}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log('Tasks data received:', data);
+        setTasks(data);
         setLoading(false);
-      } catch (err) {
+      })
+      .catch(err => {
         console.error('Error fetching tasks:', err);
         setTasks([]); // Set to empty array on error
         setLoading(false);
-        alert('Error fetching tasks');
-      }
-    };
-
-    fetchTasks();
+      });
   }, [user?.id, participantId]);
 
   const handleStatusChange = (taskId, newStatus) => {
@@ -66,13 +41,12 @@ function ActivityChecklist({ participantId }) {
     })
       .then(res => {
         if (!res.ok) throw new Error('Failed to update');
-        // Ensure tasks is an array before mapping
-        setTasks(currentTasks => {
-          if (!Array.isArray(currentTasks)) return [];
-          return currentTasks.map(task =>
+        // Update the task in the state
+        setTasks(currentTasks => 
+          currentTasks.map(task =>
             task.assignment_id === taskId ? { ...task, status: newStatus } : task
-          );
-        });
+          )
+        );
         if (newStatus === 'Completed') {
           setTimeout(() => {
             alert('Task marked as completed!');
@@ -87,15 +61,7 @@ function ActivityChecklist({ participantId }) {
     navigate('/InternDashboard');
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const getFilteredTasks = () => {
-    // Ensure tasks is an array before filtering
-    if (!Array.isArray(tasks)) return [];
-    
     switch(filter) {
       case 'completed':
         return tasks.filter(task => task.status === 'Completed');
@@ -109,21 +75,25 @@ function ActivityChecklist({ participantId }) {
   };
 
   const getTaskStats = () => {
-    // Ensure tasks is an array before filtering
-    if (!Array.isArray(tasks)) {
-      return { completed: 0, inProgress: 0, pending: 0, total: 0 };
-    }
-    
     const completed = tasks.filter(t => t.status === 'Completed').length;
     const inProgress = tasks.filter(t => t.status === 'In Progress' || t.status === 'In progress').length;
     const pending = tasks.filter(t => t.status === 'Pending').length;
-    return { completed, inProgress, pending, total: tasks.length };
+    const completionRate = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
+    return { completed, inProgress, pending, total: tasks.length, completionRate };
   };
 
   if (loading) {
     return (
-      <div className="tasks-page">
-        <div className="loading-container">Loading tasks...</div>
+      <div className="checklist-container">
+        <div className="loading-message">Loading tasks...</div>
+      </div>
+    );
+  }
+
+  if (!tasks.length) {
+    return (
+      <div className="checklist-container">
+        <div className="empty-message">No tasks assigned yet.</div>
       </div>
     );
   }
@@ -132,46 +102,71 @@ function ActivityChecklist({ participantId }) {
   const stats = getTaskStats();
 
   return (
-    <div className="tasks-page">
-      {/* Header */}
-      <div className="tasks-header">
-        <button onClick={handleGoBack} className="back-btn">
-          ← Back to Dashboard
-        </button>
-        <h1>My Tasks</h1>
-        <p>Manage and track your internship assignments</p>
-        <button onClick={handleLogout} className="logout-btn">
-          🚪 Log Out
-        </button>
+    <div className="checklist-container">
+      {/* Back Button */}
+      <button onClick={handleGoBack} className="back-to-dashboard-btn">
+        ← Back to Dashboard
+      </button>
+
+      {/* Task Stats Overview */}
+      <div className="task-stats-grid">
+        <div className="task-stat-card">
+          <span className="stat-icon">📋</span>
+          <div className="stat-details">
+            <span className="stat-number">{stats.total}</span>
+            <span className="stat-label">Total Tasks</span>
+          </div>
+        </div>
+        <div className="task-stat-card">
+          <span className="stat-icon">✅</span>
+          <div className="stat-details">
+            <span className="stat-number completed">{stats.completed}</span>
+            <span className="stat-label">Completed</span>
+          </div>
+        </div>
+        <div className="task-stat-card">
+          <span className="stat-icon">⏳</span>
+          <div className="stat-details">
+            <span className="stat-number in-progress">{stats.inProgress}</span>
+            <span className="stat-label">In Progress</span>
+          </div>
+        </div>
+        <div className="task-stat-card">
+          <span className="stat-icon">📊</span>
+          <div className="stat-details">
+            <span className="stat-number rate">{stats.completionRate}%</span>
+            <span className="stat-label">Completion</span>
+          </div>
+        </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="tasks-stats">
-        <div className="stat-card">
-          <span className="stat-number completed">{stats.completed}</span>
-          <span className="stat-label">Completed</span>
+      {/* Progress Bar */}
+      <div className="overall-progress">
+        <div className="progress-header">
+          <h3>Overall Progress</h3>
+          <span className="progress-text">
+            {stats.completed} of {stats.total} tasks completed
+          </span>
         </div>
-        <div className="stat-card">
-          <span className="stat-number in-progress">{stats.inProgress}</span>
-          <span className="stat-label">In Progress</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-number pending">{stats.pending}</span>
-          <span className="stat-label">Pending</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-number total">{stats.total}</span>
-          <span className="stat-label">Total Tasks</span>
+        <div className="progress-bar-wrapper">
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${stats.completionRate}%` }}
+            >
+              <span className="progress-label">{stats.completionRate}%</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="filter-tabs">
+      <div className="task-filters">
         <button 
           className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
         >
-          All Tasks ({stats.total})
+          All ({stats.total})
         </button>
         <button 
           className={`filter-tab ${filter === 'pending' ? 'active' : ''}`}
@@ -194,17 +189,16 @@ function ActivityChecklist({ participantId }) {
       </div>
 
       {/* Tasks List */}
-      <div className="tasks-container">
-        {!Array.isArray(filteredTasks) || filteredTasks.length === 0 ? (
-          <div className="no-tasks">
-            <p>No tasks found in this category.</p>
-          </div>
+      <div className="tasks-list-container">
+        <h3 className="list-title">Task Details</h3>
+        {filteredTasks.length === 0 ? (
+          <div className="no-tasks-message">No tasks in this category.</div>
         ) : (
-          <ul className="tasks-list">
+          <ul className="task-list">
             {filteredTasks.map(task => (
               <li
                 key={task.assignment_id}
-                className={`task-item ${
+                className={`task-item-styled ${
                   task.status === 'Completed'
                     ? 'completed'
                     : task.status === 'In progress' || task.status === 'In Progress'
@@ -212,9 +206,10 @@ function ActivityChecklist({ participantId }) {
                     : 'pending'
                 }`}
               >
-                <label className="task-checkbox-label">
+                <div className="task-checkbox-wrapper">
                   <input
                     type="checkbox"
+                    id={`task-${task.assignment_id}`}
                     checked={task.status === 'Completed'}
                     disabled={updating === task.assignment_id}
                     onChange={() =>
@@ -224,22 +219,12 @@ function ActivityChecklist({ participantId }) {
                       )
                     }
                   />
-                  <span className="custom-checkbox"></span>
-                </label>
-                <div className="task-content">
-                  <span className="task-description">{task.function_description}</span>
-                  <span
-                    className={`task-status ${
-                      task.status === 'Completed'
-                        ? 'status-completed'
-                        : task.status === 'In Progress' || task.status === 'In progress'
-                        ? 'status-inprogress'
-                        : 'status-pending'
-                    }`}
-                  >
-                    {task.status}
-                  </span>
+                  <label htmlFor={`task-${task.assignment_id}`} className="checkbox-display"></label>
                 </div>
+                <span className="task-description">{task.function_description}</span>
+                <span className={`task-status-badge ${task.status.toLowerCase().replace(' ', '-')}`}>
+                  {task.status}
+                </span>
               </li>
             ))}
           </ul>
