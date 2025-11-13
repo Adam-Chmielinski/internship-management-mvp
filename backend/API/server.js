@@ -46,8 +46,13 @@ const frontendPath = path.join(__dirname, '../../frontend/build');
 
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
+
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      res.sendFile(path.join(frontendPath, 'index.html'));
+    } else {
+      next();
+    }
   });
 }
 
