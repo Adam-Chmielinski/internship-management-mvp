@@ -37,6 +37,10 @@ const HrDashboard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [openDropdown, setOpenDropdown] = useState(null);
+  
+  // New state for tracking pending assignments
+  const [pendingAssignments, setPendingAssignments] = useState({});
+  const [assigningInterns, setAssigningInterns] = useState(false);
 
   // Hard-coded training sectors
   const trainingSectors = [
@@ -182,42 +186,122 @@ const HrDashboard = () => {
     }
   };
 
-  const handleAssignIntern = async (internshipId, internId, isAssigning) => {
-    try {
-      const token = localStorage.getItem('token');
-      const endpoint = isAssigning ? '/hr/assignIntern' : '/hr/unassignIntern';
-      console.log('Assigning intern:', internshipId, internId, isAssigning);
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ internshipId, internId }),
+  // Initialize pending assignments when dropdown opens
+  const toggleDropdown = (program_id) => {
+    if (openDropdown !== program_id) {
+      // Opening a new dropdown - initialize pending assignments for this internship
+      const internship = internships.find(i => i.id === program_id);
+      const currentAssignments = {};
+      
+      // Mark currently assigned interns
+      internship?.interns?.forEach(intern => {
+        const matchingIntern = allInterns.find(ai => 
+          ai.id === intern.id || ai.full_name === intern.full_name
+        );
+        if (matchingIntern) {
+          currentAssignments[matchingIntern.id] = true;
+        }
       });
-      console.log('Response status:', response);
-
-      if (response.ok) {
-        fetchDashboardData(); // Refresh data
-      } else {
-        throw new Error('Failed to update intern assignment');
-      }
-    } catch (error) {
-      alert('Error updating intern assignment: ' + error.message);
+      
+      setPendingAssignments(currentAssignments);
+      setOpenDropdown(program_id);
+    } else {
+      // Closing dropdown
+      setOpenDropdown(null);
+      setPendingAssignments({});
     }
   };
 
-  const toggleDropdown = (internshipId) => {
-    setOpenDropdown(openDropdown === internshipId ? null : internshipId);
+  // Handle checkbox change (local state only)
+  const handleCheckboxChange = (intern_id, isChecked) => {
+    setPendingAssignments(prev => ({
+      ...prev,
+      [intern_id]: isChecked
+    }));
   };
 
-  const isInternAssigned = (internshipId, internId) => {
-    const internship = internships.find(i => i.id === internshipId);
-    return internship?.interns?.some(intern => intern.id === internId || intern.full_name === getInternById(internId)?.full_name);
+  // Submit all assignment changes
+  const handleSubmitAssignments = async (program_id) => {
+    setAssigningInterns(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const internship = internships.find(i => i.id === program_id);
+      
+      // Get currently assigned intern IDs
+      const currentlyAssigned = new Set();
+      internship?.interns?.forEach(intern => {
+        const matchingIntern = allInterns.find(ai => 
+          ai.id === intern.id || ai.full_name === intern.full_name
+        );
+        if (matchingIntern) {
+          currentlyAssigned.add(matchingIntern.id);
+        }
+      });
+      
+      // Determine which interns to assign and unassign
+      const toAssign = [];
+      const toUnassign = [];
+      
+      allInterns.forEach(intern => {
+        const shouldBeAssigned = pendingAssignments[intern.id] || false;
+        const isCurrentlyAssigned = currentlyAssigned.has(intern.id);
+        
+        if (shouldBeAssigned && !isCurrentlyAssigned) {
+          toAssign.push(intern.id);
+        } else if (!shouldBeAssigned && isCurrentlyAssigned) {
+          toUnassign.push(intern.id);
+        }
+      });
+      
+      // Execute all assignments
+      const assignPromises = toAssign.map(intern_id => 
+        console.log('Assigning intern', intern_id, 'to internship', program_id) ||
+        fetch(`${API_URL}/hr/assignIntern`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ program_id, intern_id }),
+        })
+      );
+      
+      // Execute all unassignments
+      const unassignPromises = toUnassign.map(intern_id => 
+        fetch(`${API_URL}/hr/unassignIntern`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ program_id, intern_id }),
+        })
+      );
+      
+      // Wait for all operations to complete
+      await Promise.all([...assignPromises, ...unassignPromises]);
+      
+      alert(`Successfully updated intern assignments!`);
+      setOpenDropdown(null);
+      setPendingAssignments({});
+      fetchDashboardData(); // Refresh data
+      
+    } catch (error) {
+      alert('Error updating intern assignments: ' + error.message);
+    } finally {
+      setAssigningInterns(false);
+    }
   };
 
-  const getInternById = (internId) => {
-    return allInterns.find(intern => intern.id === internId);
+  // Cancel assignments and close dropdown
+  const handleCancelAssignments = () => {
+    setOpenDropdown(null);
+    setPendingAssignments({});
+  };
+
+  const getInternById = (intern_id) => {
+    return allInterns.find(intern => intern.id === intern_id);
   };
 
   const handleLogout = () => {
@@ -250,17 +334,19 @@ const HrDashboard = () => {
     };
   };
 
-  // Click outside to close dropdown
+  // Modified click outside handler to prevent closing on button clicks
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.assign-dropdown-container')) {
-        setOpenDropdown(null);
+        if (openDropdown !== null && !assigningInterns) {
+          handleCancelAssignments();
+        }
       }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  }, [openDropdown, assigningInterns]);
 
   if (loading) {
     return (
@@ -381,12 +467,8 @@ const HrDashboard = () => {
                                     <label key={intern.id} className="dropdown-item">
                                       <input
                                         type="checkbox"
-                                        checked={isInternAssigned(internship.id, intern.id)}
-                                        onChange={(e) => handleAssignIntern(
-                                          internship.id,
-                                          intern.id,
-                                          e.target.checked
-                                        )}
+                                        checked={pendingAssignments[intern.id] || false}
+                                        onChange={(e) => handleCheckboxChange(intern.id, e.target.checked)}
                                       />
                                       <span className="intern-info">
                                         <span className="intern-name">{intern.full_name}</span>
@@ -395,6 +477,22 @@ const HrDashboard = () => {
                                     </label>
                                   ))
                                 )}
+                              </div>
+                              <div className="dropdown-actions">
+                                <button
+                                  className="cancel-assignments-btn"
+                                  onClick={handleCancelAssignments}
+                                  disabled={assigningInterns}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  className="submit-assignments-btn"
+                                  onClick={() => handleSubmitAssignments(internship.id)}
+                                  disabled={assigningInterns || allInterns.length === 0}
+                                >
+                                  {assigningInterns ? 'Assigning...' : 'Apply Changes'}
+                                </button>
                               </div>
                             </div>
                           )}
@@ -462,7 +560,7 @@ const HrDashboard = () => {
           </div>
         )}
 
-        {/* Add Intern Tab - unchanged */}
+        {/* Add Intern Tab */}
         {activeTab === 'addIntern' && (
           <div className="form-section">
             <h2 className="section-title">Add New Intern</h2>
@@ -537,7 +635,7 @@ const HrDashboard = () => {
           </div>
         )}
 
-        {/* Add Supervisor Tab - unchanged */}
+        {/* Add Supervisor Tab */}
         {activeTab === 'addSupervisor' && (
           <div className="form-section">
             <h2 className="section-title">Add New Supervisor</h2>
@@ -595,7 +693,7 @@ const HrDashboard = () => {
           </div>
         )}
 
-        {/* Create Internship Tab - UPDATED without intern selection */}
+        {/* Create Internship Tab */}
         {activeTab === 'createInternship' && (
           <div className="form-section">
             <h2 className="section-title">Create New Internship Program</h2>
