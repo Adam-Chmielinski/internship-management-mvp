@@ -10,7 +10,6 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Load main backend files (e.g. app.js, auth.js, db.js)
 const rootFolder = __dirname;
 fs.readdirSync(rootFolder).forEach(file => {
   if (file === 'server.js' || !file.endsWith('.js') || file.startsWith('_')) return;
@@ -23,7 +22,6 @@ fs.readdirSync(rootFolder).forEach(file => {
   }
 });
 
-// Load routers from /routes
 const routesFolder = path.join(__dirname, 'routes');
 if (fs.existsSync(routesFolder)) {
   fs.readdirSync(routesFolder).forEach(file => {
@@ -36,7 +34,7 @@ if (fs.existsSync(routesFolder)) {
         app.use(routeName, route);
         console.log(`✅ Loaded route: ${routeName}`);
       } else {
-        console.log(`ℹ️ Skipped ${file} (not an Express router)`);
+        console.log(`ℹ️ Skipped ${file} (not a valid Express router)`);
       }
     } catch (err) {
       console.error(`❌ Failed to load route ${file}: ${err.message}`);
@@ -46,11 +44,10 @@ if (fs.existsSync(routesFolder)) {
   console.log('⚠️ No "routes" folder found.');
 }
 
-// Serve frontend build if available
 const frontendPath = path.join(__dirname, '../../frontend/build');
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
-  app.get('*', (req, res) => {
+  app.use((req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
