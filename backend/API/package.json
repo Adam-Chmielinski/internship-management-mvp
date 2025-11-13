@@ -1,9 +1,12 @@
 {
   "dependencies": {
+    "@azure/identity": "^4.13.0",
+    "@azure/storage-blob": "^12.29.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "pg-promise": "^12.2.0"
+    "pg-promise": "^12.2.0",
+    "uuid": "^13.0.0"
   }
 }
