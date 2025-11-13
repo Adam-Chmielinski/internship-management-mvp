@@ -1,0 +1,113 @@
+const express = require('express')
+const pool = require('../db')
+const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const router = express.Router();
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+router.get('/:internId/overview', async (req, res) => {
+    const { internId } = req.params;
+
+    if (!Number.isInteger(Number(internId))) {
+        return res.status(400).json({ error: 'Invalid intern ID' });
+    }
+
+    try {
+        const profileQ = await pool.query(
+            `SELECT
+                i.id AS intern_id,
+                i.full_name,
+                i.training_sector,
+                i.tutor_final_approval,
+                prog.id AS program_id,
+                prog.program_name,
+                prog.start_date,
+                prog.end_date,
+                s.id AS supervisor_id,
+                s.full_name AS supervisor_name,
+                s.email AS supervisor_email
+            FROM "Interns" i
+            LEFT JOIN "Internship_Programs" prog ON i.program_id = prog.id
+            LEFT JOIN "Supervisor" s ON prog.supervisor_id = s.id
+            WHERE i.id = $1`,
+            [internId]
+        );
+
+        if (profileQ.rowCount === 0) {
+            return res.status(404).json({ error: 'Intern not found' });
+        }
+        const progressQ = await pool.query(
+            `SELECT
+                COUNT(*)::int AS total_tasks,
+                COUNT(*) FILTER (WHERE ia.status = 'Completed')::int AS completed_tasks
+            FROM "Intern_Activities" ia
+            WHERE ia.participant_id = $1`,
+            [internId]
+        );
+
+        const monitoringQ = await pool.query(
+            `SELECT
+                id,
+                week_num,
+                tutor_evaluation,
+                tutor_id
+                FROM "Weekly_Monitoring"
+                WHERE participant_id = $1
+                ORDER BY week_num DESC LIMIT 3`,
+            [internId]
+        );
+
+        const documentsQ = await pool.query(
+            `SELECT
+                id,
+                doc_type,
+                file_path,
+                upload_date
+                FROM "Documents"
+                WHERE intern_id = $1
+                ORDER BY upload_date DESC LIMIT 5`,
+            [internId]
+        );
+
+        const [profileRes, progressRes, monitoringRes, documentsRes] =
+            await Promise.all([profileQ, progressQ, monitoringQ, documentsQ]);
+
+        const profile = profileRes.rows[0];
+        const total = progressRes.rows[0]?.total_tasks ?? 0;
+        const completed = progressRes.rows[0]?.completed_tasks ?? 0;
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        return res.json({
+            profile: {
+                id: profile.intern_id,
+                full_name: profile.full_name,
+                training_sector: profile.training_sector,
+                tutor_final_approval: profile.tutor_final_approval,
+                program: {
+                    id: profile.program_id,
+                    name: profile.program_name,
+                    start_date: profile.start_date,
+                    end_date: profile.end_date
+                },
+                supervisor: {
+                    id: profile.supervisor_id,
+                    name: profile.supervisor_name,
+                    email: profile.supervisor_email
+                }
+            },
+            progress: {
+                total_tasks: total,
+                completed_tasks: completed,
+                percent
+            },
+            recentMonitoring: monitoringRes.rows,
+            recentDocuments: documentsRes.rows
+        });
+    } catch (err) {
+        console.error('Error fetching intern overview:', err);
+        res.status(500).json({ error: 'Failed to load intern overview' });
+    }
+});
+
+module.exports = router;

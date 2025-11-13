@@ -1,0 +1,136 @@
+/* src/Components/dashboards.css */
+
+/* Base dashboard styles */
+.dashboard {
+  padding: 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.dashboard h2 {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.dashboard p {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 0;
+}
+
+/* Dashboard action buttons container */
+.dashboard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+  align-items: center;
+}
+
+/* Dashboard buttons */
+.dashboard-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90%;
+  max-width: 520px;
+  padding: 1.2rem 1.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 12px;
+  text-decoration: none;
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  background-size: 200% auto;
+  background-position: right;
+}
+
+.dashboard-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.15);
+  background-position: left;
+}
+
+/* Color variants for buttons */
+.primary {
+  background: linear-gradient(90deg, #007bff, #0056b3);
+}
+
+.secondary {
+  background: linear-gradient(90deg, #28a745, #1e7e34);
+}
+
+.tertiary {
+  background: linear-gradient(90deg, #6610f2, #5a0fd0);
+}
+
+.quaternary {
+  background: linear-gradient(90deg, #6f42c1, #5a32a3);
+}
+
+/* Special color adjustments */
+.intern-dashboard .tertiary {
+  background: linear-gradient(90deg, #ffc107, #e0a800);
+  color: #212529;
+}
+
+/* Logout button container */
+.logout-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.logout-btn {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #dc3545, #bd2130);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 53, 69, 0.3);
+  background: linear-gradient(90deg, #bd2130, #dc3545);
+}
+
+/* Responsive design */
+@media (min-width: 768px) {
+  .dashboard-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .dashboard-btn {
+    width: 45%;
+    min-width: 220px;
+  }
+  
+  /* Supervisor and HR dashboards with 3 buttons */
+  .supervisor-dashboard .dashboard-btn,
+  .hr-dashboard .dashboard-btn {
+    width: 30%;
+  }
+  
+  /* Intern dashboard with 4 buttons (2x2 grid) */
+  .intern-dashboard .dashboard-btn {
+    width: 45%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .intern-dashboard .dashboard-btn {
+    width: 40%;
+  }
+}

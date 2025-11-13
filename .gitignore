@@ -1,2 +1,4 @@
 backend/API/node_modules/
 backend/API/.env
+/frontend/node_modules/
+/frontend/.env

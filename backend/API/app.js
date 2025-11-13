@@ -23,6 +23,14 @@ app.use('/supervisor', supervisorRoutes);
 const hrRoutes = require('./routes/hr.js');
 app.use('/hr', hrRoutes);
 
+const internRoutes = require('./routes/intern.js');
+app.use('/intern', internRoutes);
+
+const documentRoutes = require('./routes/documents.js');
+app.use('/documents', documentRoutes);
+// Serve uploaded files (so they can be downloaded)
+app.use('../../docs', express.static('docs'))
+
 app.get('/', (req, res) => {
   res.send('Hello World!');
 })

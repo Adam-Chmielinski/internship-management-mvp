@@ -16,7 +16,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // GET interns assigned to a supervisor
 router.get('/interns', async (req, res) => {
   
-  const decoded = authenticateToken(req, res)
+  const decoded = authenticateToken(req, res);
   console.log(decoded);
 
   try {
@@ -24,7 +24,7 @@ router.get('/interns', async (req, res) => {
       SELECT i.id, i.full_name, i.training_sector, prog.program_name, i.tutor_final_approval
       FROM "Interns" i
       JOIN "Internship_Programs" prog ON i.program_id = prog.id
-      WHERE i.supervisor_id = $1`,
+      WHERE prog.supervisor_id = $1`,
       [decoded.userId]);
 
     res.json(result.rows);
@@ -34,8 +34,34 @@ router.get('/interns', async (req, res) => {
   }
 });
 
+router.get('/intern/:internId', async (req, res) => {
+  const { internId } = req.params;
+  
+  try {
+    const result = await pool.query(`
+      SELECT i.full_name, i.training_sector, prog.program_name
+      FROM "Interns" i
+      JOIN "Internship_Programs" prog ON i.program_id = prog.id
+      WHERE i.id = $1`,
+      [internId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Intern not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch intern details' });
+  }
+});
+
 router.get('/checklist/:internId', async (req, res) => {
   const { internId } = req.params;
+
+  if(!Number.isInteger(Number(internId))) {
+    return res.status(400).json({ error: 'Invalid intern ID' });
+  }
 
   try {
     const result = await pool.query(`
@@ -58,9 +84,13 @@ router.get('/checklist/:internId', async (req, res) => {
   }
 });
 
-router.patch('/:supervisorId/interns/:internId/approve', async (req, res) => {
-  const supervisorId = Number(req.params.supervisorId);
-  const internId = Number(req.params.internId);
+router.patch('/interns/approve', async (req, res) => {
+  //const supervisorId = Number(req.params.supervisorId);
+  const decoded = authenticateToken(req, res)
+  console.log(decoded);
+
+  const supervisorId = Number(decoded.userId);
+  const internId = Number(req.body.participantId);
 
   if (!Number.isInteger(supervisorId) || !Number.isInteger(internId)) {
     return res.status(400).json({ error: 'Invalid path parameters' });
@@ -74,17 +104,22 @@ router.patch('/:supervisorId/interns/:internId/approve', async (req, res) => {
       UPDATE "Interns" i
       SET tutor_final_approval = TRUE
       WHERE i.id = $1
-        AND i.supervisor_id = $2
-        AND (i.tutor_final_approval IS DISTINCT FROM TRUE)
-        AND (
-          NOT $3
-          OR NOT EXISTS (
-              SELECT 1
-              FROM "Intern_Activities" ia
-              WHERE ia.participant_id = i.id
-                AND ia.status <> 'Completed'
-          )
+      AND EXISTS (
+        SELECT 1
+        FROM "Internship_Programs" prog
+        WHERE prog.id = i.program_id
+        AND prog.supervisor_id = $2
+      )
+      AND (i.tutor_final_approval IS DISTINCT FROM TRUE)
+      AND (
+        NOT $3
+        OR NOT EXISTS (
+          SELECT 1
+          FROM "Intern_Activities" ia
+          WHERE ia.participant_id = i.id
+          AND ia.status <> 'Completed'
         )
+      )
       RETURNING i.id, i.full_name, i.tutor_final_approval
     `, [internId, supervisorId, enforceAllTasksCompleted]);
 
@@ -98,9 +133,10 @@ router.patch('/:supervisorId/interns/:internId/approve', async (req, res) => {
     // figure out why not working for better error reporting:
     // does the intern exist
     const internRes = await pool.query(`
-      SELECT id, supervisor_id, tutor_final_approval
-      FROM "Interns"
-      WHERE id = $1
+      SELECT i.id, prog.supervisor_id, i.tutor_final_approval
+      FROM "Interns" i
+      JOIN "Internship_Programs" prog ON i.program_id = prog.id
+      WHERE i.id = $1
     `, [internId]);
 
     if (internRes.rowCount === 0) {
@@ -145,11 +181,16 @@ router.patch('/:supervisorId/interns/:internId/approve', async (req, res) => {
 
 // POST /supervisor/:supervisorId/interns/:internId/weekly
 // Body: { weekNum: number, tutorEvaluation: string }
-router.post('/:supervisorId/interns/:internId/weekly', async (req, res) => {
-  const supervisorId = Number(req.params.supervisorId);
-  const internId = Number(req.params.internId);
-  const weekNum = Number.parseInt(req.body.weekNum, 10);
-  const tutorEvaluation = (req.body.tutorEvaluation || '').trim();
+router.post('/intern/weekly', async (req, res) => {
+    
+  const decoded = authenticateToken(req, res);
+  console.log(decoded);
+
+  const supervisorId = Number(decoded.userId);
+  const internId = Number(req.body.participantId);
+  //const weekNum = Number.parseInt(req.body.weekNum, 10);
+  const weekNum = 3; // temporarily hardcoded for testing
+  const tutorEvaluation = (req.body.evaluation || '').trim();
 
   // 1) Payload and path validation up-front keeps queries clean and errors obvious
   if (!Number.isInteger(supervisorId) || !Number.isInteger(internId)) {
@@ -167,8 +208,9 @@ router.post('/:supervisorId/interns/:internId/weekly', async (req, res) => {
     //    Doing it in SQL (WHERE supervisor_id = $2) is stronger than a UI-only check.
     const owns = await pool.query(`
       SELECT 1
-      FROM "Interns"
-      WHERE id = $1 AND supervisor_id = $2
+      FROM "Interns" i
+      JOIN "Internship_Programs" prog ON i.program_id = prog.id
+      WHERE i.id = $1 AND prog.supervisor_id = $2
     `, [internId, supervisorId]);
 
     if (owns.rowCount === 0) {
