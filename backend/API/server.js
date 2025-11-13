@@ -10,42 +10,49 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// 1️⃣ Wczytaj pliki z głównego katalogu (np. app.js, auth.js, db.js)
 const rootFolder = __dirname;
-
 fs.readdirSync(rootFolder).forEach(file => {
   if (file === 'server.js' || file.startsWith('_') || !file.endsWith('.js')) return;
   const filePath = path.join(rootFolder, file);
   try {
     require(filePath);
-    console.log(`✅ Załadowano moduł: ${file}`);
+    console.log(`✅ Loaded module: ${file}`);
   } catch (err) {
-    console.error(`❌ Błąd przy ładowaniu ${file}:`, err.message);
+    console.error(`❌ Error loading ${file}:`, err.message);
   }
 });
 
-// 2️⃣ Wczytaj routery z folderu "routes"
+try {
+  const authRouter = require('./auth.js').default || require('./auth.js');
+  app.use('/api/auth', authRouter);
+  console.log('✅ Loaded router: /api/auth');
+} catch (err) {
+  console.error('⚠️ Failed to load auth.js:', err.message);
+}
+
 const routesFolder = path.join(__dirname, 'routes');
 
 if (fs.existsSync(routesFolder)) {
   fs.readdirSync(routesFolder).forEach(file => {
     if (file.startsWith('_') || !file.endsWith('.js')) return;
     const filePath = path.join(routesFolder, file);
-    const route = require(filePath);
-
-    if (route && route.use && route.handle) {
-      const routeName = '/api/' + path.basename(file, '.js');
-      app.use(routeName, route);
-      console.log(`✅ Loaded route: ${routeName}`);
-    } else {
-      console.log(`ℹ️ Pominięto ${file} (nie jest routerem Express)`);
+    try {
+      const route = require(filePath);
+      if (route && route.use && route.handle) {
+        const routeName = '/api/' + path.basename(file, '.js');
+        app.use(routeName, route);
+        console.log(`✅ Loaded router: ${routeName}`);
+      } else {
+        console.log(`ℹ️ Skipped ${file} (not a valid Express router)`);
+      }
+    } catch (err) {
+      console.error(`❌ Error loading ${file}:`, err.message);
     }
   });
 } else {
-  console.log('⚠️ Folder "routes" nie istnieje – brak endpointów do załadowania.');
+  console.log('⚠️ "routes" folder not found – no endpoints loaded.');
 }
 
-// 3️⃣ Obsługa frontendu (np. React build)
 const frontendPath = path.join(__dirname, '../../frontend/build');
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
