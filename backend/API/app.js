@@ -12,13 +12,16 @@ const checklistRoutes = require('./routes/checklist.js');
 app.use('/checklist', checklistRoutes);
 
 const allusersRoutes = require('./routes/all_users.js');
-app.use('/getAllUsers', allusersRoutes);
+app.use('/getAll', allusersRoutes);
 
 const loginRoutes = require('./routes/login.js');
 app.use('/login', loginRoutes);
 
 const supervisorRoutes = require('./routes/supervisor.js');
 app.use('/supervisor', supervisorRoutes);
+
+const hrRoutes = require('./routes/hr.js');
+app.use('/hr', hrRoutes);
 
 const internRoutes = require('./routes/intern.js');
 app.use('/intern', internRoutes);
