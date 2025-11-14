@@ -2,11 +2,12 @@ const express = require('express')
 const pool = require('../db')
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const { authenticateToken } = require('../auth');
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-router.get('/:internId/overview', async (req, res) => {
+router.get('/:internId/overview', authenticateToken, async (req, res) => {
     const { internId } = req.params;
 
     if (!Number.isInteger(Number(internId))) {
@@ -18,6 +19,7 @@ router.get('/:internId/overview', async (req, res) => {
             `SELECT
                 i.id AS intern_id,
                 i.full_name,
+                i.email as intern_email,
                 i.training_sector,
                 i.tutor_final_approval,
                 prog.id AS program_id,
@@ -82,6 +84,7 @@ router.get('/:internId/overview', async (req, res) => {
             profile: {
                 id: profile.intern_id,
                 full_name: profile.full_name,
+                email: profile.intern_email,
                 training_sector: profile.training_sector,
                 tutor_final_approval: profile.tutor_final_approval,
                 program: {
