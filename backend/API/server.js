@@ -1,19 +1,17 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const cors = require('cors'); // żeby frontend mógł robić requesty
+const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-// Dodaj CORS dla frontendowej domeny
 app.use(cors({
-  origin: 'https://twoj-frontend.netlify.app', // zmień na swój Netlify URL
+  origin: 'https://internship-management-mvp.netlify.app', // zmień na swój frontend URL
 }));
 
 const apiFolder = __dirname;
-const PORT = process.env.PORT || 3000;
 
 fs.readdirSync(apiFolder).forEach(file => {
   if (file === 'server.js' || file.startsWith('_') || !file.endsWith('.js')) return;
@@ -32,12 +30,17 @@ fs.readdirSync(apiFolder).forEach(file => {
   } else {
     console.warn(`⚠️ Pominięto ${file} — nie jest poprawnym routerem Express`);
   }
+});
+
 app.get('/', (req, res) => {
   res.send('Backend działa!');
 });
 
-const routesFolder = path.join(__dirname, 'routes');
+app.get('/api/hello', (req, res) => {
+  res.json({ message: 'Cześć z backendu!' });
+});
 
+const routesFolder = path.join(__dirname, 'routes');
 if (fs.existsSync(routesFolder)) {
   fs.readdirSync(routesFolder).forEach(file => {
     if (file.startsWith('_') || !file.endsWith('.js')) return;
@@ -59,16 +62,11 @@ if (fs.existsSync(routesFolder)) {
 const frontendPath = path.join(__dirname, '../../frontend/build');
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
-
-  app.use((req, res) => {
+  app.get('*', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
 
-app.listen(port, () => {
-  console.log(`🚀 Server is running on port ${port}`);
-app.get('/api/hello', (req, res) => {
-  res.json({ message: 'Cześć z backendu!' });
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
