@@ -365,7 +365,7 @@ const HrDashboard = () => {
         <h1>HR Dashboard</h1>
         <p>Welcome, {user?.name || 'HR Manager'}</p>
         <button onClick={handleLogout} className="logout-btn">
-          🚪 Log Out
+          Log Out
         </button>
       </div>
 

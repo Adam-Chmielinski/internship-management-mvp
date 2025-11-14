@@ -68,7 +68,7 @@ const SupervisorDashboard = () => {
         <h1>Supervisor Dashboard</h1>
         <p>Welcome, {user?.name || `Supervisor #${user?.id}`}</p>
         <button onClick={handleLogout} className="logout-btn">
-          🚪 Log Out
+          Log Out
         </button>
       </div>
 
