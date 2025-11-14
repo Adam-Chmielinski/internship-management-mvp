@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import './Monitoring.css';
-import API_URL from '../Config/api';
+import API_URL from '../../Config/api';
 
 const Monitoring = () => {
   const { participantId } = useParams();
@@ -77,8 +77,8 @@ const Monitoring = () => {
         }
         throw new Error('Failed to fetch intern data');
       }
-
       const data = await response.json();
+      console.log('Intern data fetched:', data);
       setInternData(data);
     
       // Extract recentMonitoring from the data (THIS IS THE KEY FIX)

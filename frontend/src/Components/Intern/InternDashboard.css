@@ -489,11 +489,12 @@
 
 .document-type-wrapper {
   flex: 0.8;
-  min-width: 180px;
+  min-width: 230px;
 }
 
-.document-type-select {
-  width: 100%;
+.document-type-select { 
+  width: 100%; 
+  text-align: left;
   padding: 0.75rem 1rem;
   border: 2px dashed #667eea;
   border-radius: 8px;
@@ -520,7 +521,7 @@
 .file-input-wrapper {
   flex: 1;
   position: relative;
-  min-width: 200px;
+  min-width: 250px;
 }
 
 .file-input {

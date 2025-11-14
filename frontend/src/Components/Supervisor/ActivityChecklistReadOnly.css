@@ -313,18 +313,18 @@
 
   .task-checkbox-readonly {
     margin-bottom: 0.5rem;
-  }
+  } 
 
   .task-status-badge {
     align-self: flex-start;
-  }
-} 
+  } 
+}
 .back-to-monitoring-btn {
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 8px; 
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;

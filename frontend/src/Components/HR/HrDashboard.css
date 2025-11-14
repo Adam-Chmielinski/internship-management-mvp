@@ -10,12 +10,12 @@
 /* Header */
 .dashboard-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 3rem; 
   padding: 2rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 16px;
   color: white;
-  position: relative;
+  position: relative; 
 }
 
 .dashboard-header h1 {
@@ -256,13 +256,13 @@
   transform: rotate(-90deg);
 }
 
-.completion-text {
+.completion-text { 
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 0.65rem;
-  font-weight: bold;
+  font-size: 0.5rem; 
+  font-weight: bold; 
   color: #667eea;
 }
 

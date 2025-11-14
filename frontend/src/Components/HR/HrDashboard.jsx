@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './HrDashboard.css';
-import API_URL from '../Config/api';
+import API_URL from '../../Config/api';
 
 const HrDashboard = () => {
   const { user, logout } = useAuth();

@@ -1,64 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import './ActivityChecklist.css';
-import API_URL from '../Config/api';
+import './ActivityChecklistReadOnly.css';
+import API_URL from '../../Config/api';
+import { useParams } from 'react-router-dom';
 
-function ActivityChecklist({ participantId }) {
+function ActivityChecklistReadOnly() {
+  const { participantId } = useParams();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(null);
   const [filter, setFilter] = useState('all');
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Use the same approach as supervisor view
-    const internId = participantId || user?.id;
-    console.log('Fetching tasks for intern ID:', internId);
-    
-    fetch(`${API_URL}/supervisor/checklist/${internId}`)
+    console.log(participantId);
+    fetch(`${API_URL}/supervisor/checklist/${participantId}`)
       .then(res => res.json())
       .then(data => {
-        console.log('Tasks data received:', data);
         setTasks(data);
         setLoading(false);
       })
       .catch(err => {
-        console.error('Error fetching tasks:', err);
-        setTasks([]); // Set to empty array on error
         setLoading(false);
+        console.error('Error fetching tasks:', err);
       });
-  }, [user?.id, participantId]);
-
-  const handleStatusChange = (taskId, newStatus) => {
-    setUpdating(taskId);
-    
-    fetch(`${API_URL}/checklist/update/${taskId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskId, status: newStatus }),
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to update');
-        // Update the task in the state
-        setTasks(currentTasks => 
-          currentTasks.map(task =>
-            task.assignment_id === taskId ? { ...task, status: newStatus } : task
-          )
-        );
-        if (newStatus === 'Completed') {
-          setTimeout(() => {
-            alert('Task marked as completed!');
-          }, 100);
-        }
-      })
-      .catch(() => alert('Failed to update status'))
-      .finally(() => setUpdating(null));
-  };
+  }, [participantId]);
 
   const handleGoBack = () => {
-    navigate('/InternDashboard');
+    navigate(`/monitoring/${participantId}`);
   };
 
   const getFilteredTasks = () => {
@@ -84,7 +52,7 @@ function ActivityChecklist({ participantId }) {
 
   if (loading) {
     return (
-      <div className="checklist-container">
+      <div className="checklist-readonly-container">
         <div className="loading-message">Loading tasks...</div>
       </div>
     );
@@ -92,8 +60,11 @@ function ActivityChecklist({ participantId }) {
 
   if (!tasks.length) {
     return (
-      <div className="checklist-container">
-        <div className="empty-message">No tasks assigned yet.</div>
+      <div className="checklist-readonly-container">
+        <button onClick={handleGoBack} className="back-to-monitoring-btn">
+          ← Back to Monitoring
+        </button>
+        <div className="empty-message">No tasks assigned to this intern.</div>
       </div>
     );
   }
@@ -102,10 +73,10 @@ function ActivityChecklist({ participantId }) {
   const stats = getTaskStats();
 
   return (
-    <div className="checklist-container">
+    <div className="checklist-readonly-container">
       {/* Back Button */}
-      <button onClick={handleGoBack} className="back-to-dashboard-btn">
-        ← Back to Dashboard
+      <button onClick={handleGoBack} className="back-to-monitoring-btn">
+        ← Back to Monitoring
       </button>
 
       {/* Task Stats Overview */}
@@ -194,11 +165,11 @@ function ActivityChecklist({ participantId }) {
         {filteredTasks.length === 0 ? (
           <div className="no-tasks-message">No tasks in this category.</div>
         ) : (
-          <ul className="task-list">
+          <ul className="readonly-task-list">
             {filteredTasks.map(task => (
               <li
                 key={task.assignment_id}
-                className={`task-item-styled ${
+                className={`task-item-readonly ${
                   task.status === 'Completed'
                     ? 'completed'
                     : task.status === 'In progress' || task.status === 'In Progress'
@@ -206,20 +177,14 @@ function ActivityChecklist({ participantId }) {
                     : 'pending'
                 }`}
               >
-                <div className="task-checkbox-wrapper">
+                <div className="task-checkbox-readonly">
                   <input
                     type="checkbox"
-                    id={`task-${task.assignment_id}`}
                     checked={task.status === 'Completed'}
-                    disabled={updating === task.assignment_id}
-                    onChange={() =>
-                      handleStatusChange(
-                        task.assignment_id,
-                        task.status === 'Pending' ? 'In Progress' : 'Completed'
-                      )
-                    }
+                    disabled={true}
+                    readOnly
                   />
-                  <label htmlFor={`task-${task.assignment_id}`} className="checkbox-display"></label>
+                  <span className="checkbox-display"></span>
                 </div>
                 <span className="task-description">{task.function_description}</span>
                 <span className={`task-status-badge ${task.status.toLowerCase().replace(' ', '-')}`}>
@@ -234,4 +199,4 @@ function ActivityChecklist({ participantId }) {
   );
 }
 
-export default ActivityChecklist;
+export default ActivityChecklistReadOnly;
