@@ -14,18 +14,15 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // GET interns assigned to a supervisor
-router.get('/interns', async (req, res) => {
-  
-  const decoded = authenticateToken(req, res);
-  console.log(decoded);
+router.get('/interns', authenticateToken, async (req, res) => {
 
   try {
     const result = await pool.query(`
-      SELECT i.id, i.full_name, i.training_sector, prog.program_name, i.tutor_final_approval
+      SELECT i.id, i.full_name, i.email, i.training_sector, prog.program_name, i.tutor_final_approval
       FROM "Interns" i
       JOIN "Internship_Programs" prog ON i.program_id = prog.id
       WHERE prog.supervisor_id = $1`,
-      [decoded.userId]);
+      [req.userId]);
 
     res.json(result.rows);
   } catch (err) {
@@ -34,7 +31,7 @@ router.get('/interns', async (req, res) => {
   }
 });
 
-router.get('/intern/:internId', async (req, res) => {
+router.get('/intern/:internId', authenticateToken, async (req, res) => {
   const { internId } = req.params;
   
   try {
@@ -56,7 +53,7 @@ router.get('/intern/:internId', async (req, res) => {
   }
 });
 
-router.get('/checklist/:internId', async (req, res) => {
+router.get('/checklist/:internId', authenticateToken, async (req, res) => {
   const { internId } = req.params;
 
   if(!Number.isInteger(Number(internId))) {
@@ -84,13 +81,13 @@ router.get('/checklist/:internId', async (req, res) => {
   }
 });
 
-router.patch('/interns/approve', async (req, res) => {
+router.patch('/interns/approve', authenticateToken, async (req, res) => {
   //const supervisorId = Number(req.params.supervisorId);
-  const decoded = authenticateToken(req, res)
-  console.log(decoded);
 
-  const supervisorId = Number(decoded.userId);
+  const supervisorId = Number(req.userId);
   const internId = Number(req.body.participantId);
+
+  console.log(`Supervisor ${supervisorId} approving intern ${internId}`);
 
   if (!Number.isInteger(supervisorId) || !Number.isInteger(internId)) {
     return res.status(400).json({ error: 'Invalid path parameters' });
@@ -181,15 +178,20 @@ router.patch('/interns/approve', async (req, res) => {
 
 // POST /supervisor/:supervisorId/interns/:internId/weekly
 // Body: { weekNum: number, tutorEvaluation: string }
-router.post('/intern/weekly', async (req, res) => {
-    
-  const decoded = authenticateToken(req, res);
-  console.log(decoded);
+router.post('/intern/weekly', authenticateToken, async (req, res) => {
 
-  const supervisorId = Number(decoded.userId);
+  const supervisorId = Number(req.userId);
   const internId = Number(req.body.participantId);
   //const weekNum = Number.parseInt(req.body.weekNum, 10);
-  const weekNum = 3; // temporarily hardcoded for testing
+  const lastReport = await pool.query(`
+    SELECT week_num
+    FROM "Weekly_Monitoring"
+    WHERE participant_id = $1
+    ORDER BY week_num DESC
+    LIMIT 1
+  `, [internId]);
+
+  const weekNum = lastReport[0] ? lastReport[0]++ : 0; // always next week
   const tutorEvaluation = (req.body.evaluation || '').trim();
 
   // 1) Payload and path validation up-front keeps queries clean and errors obvious

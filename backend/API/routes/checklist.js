@@ -5,8 +5,8 @@ const router = express.Router();
 
 
 
-router.get('/:internId', async (req, res) => {
-  const { internId } = req.params;
+router.get('/:participantId', async (req, res) => {
+  const { participantId } = req.params;
 
   try {
   const result = await pool.query(
@@ -20,7 +20,7 @@ router.get('/:internId', async (req, res) => {
       JOIN "Activities" a ON ia.id = a.id
       WHERE ia.participant_id = $1
       ORDER BY a.id
-  `, [internId]);
+  `, [participantId]);
     res.status(200).json(result.rows);
     } catch (err) {
       console.error('Error fetching checklist:', err);

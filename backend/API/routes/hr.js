@@ -7,13 +7,7 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-router.get('/internships', async (req, res) => {
-    const decoded = authenticateToken(req, res);
-
-    if (decoded.error) {
-        return res.status(401).json({ error: decoded.error });
-    }
-    console.log(decoded);
+router.get('/internships', authenticateToken, async (req, res) => {
 
     try {
         const result_general = await pool.query(`
@@ -21,7 +15,7 @@ router.get('/internships', async (req, res) => {
             FROM "Internship_Programs" ip JOIN "Supervisor" s ON ip.supervisor_id = s.id
             JOIN "HR" hr ON ip.host_org_id = hr.id
             WHERE hr.id = $1;
-            `,[decoded.userId]);
+            `,[req.userId]);
 
         const programsWithInterns = await Promise.all(
             result_general.rows.map(async (element) => {
@@ -49,7 +43,7 @@ router.get('/internships', async (req, res) => {
     }
 });
 
-router.post('/createIntern', async(req, res) => {
+router.post('/createIntern', authenticateToken, async(req, res) => {
     var{full_name, email, password, training_sector} = req.body;
 
     try{
@@ -76,7 +70,7 @@ router.post('/createIntern', async(req, res) => {
     }
 });
 
-router.post('/createSupervisor', async(req, res) => {
+router.post('/createSupervisor', authenticateToken, async(req, res) => {
     var{full_name, email, password} = req.body;
 
     try{
@@ -103,19 +97,14 @@ router.post('/createSupervisor', async(req, res) => {
     }
 });
 
-router.post('/createInternship', async(req, res) => {
+router.post('/createInternship', authenticateToken, async(req, res) => {
     const{program_name, start_date, end_date, supervisor_id} = req.body
-    const decoded = authenticateToken(req, res);
-
-    if (decoded.error) {
-        return res.status(401).json({ error: decoded.error });
-    }
 
     try {
         await pool.query(`
             INSERT INTO "Internship_Programs" (program_name, start_date, end_date, host_org_id, supervisor_id)
             VALUES ($1,$2,$3,$4,$5)
-            `,[program_name, start_date, end_date, decoded.userId, supervisor_id]);
+            `,[program_name, start_date, end_date, req.userId, supervisor_id]);
 
         return res.status(201).json({
             message: 'Created internship program'
@@ -126,13 +115,8 @@ router.post('/createInternship', async(req, res) => {
     }
 });
 
-router.patch('/assignIntern', async(req, res) => {
+router.patch('/assignIntern', authenticateToken, async(req, res) => {
     const{program_id, intern_id} = req.body
-    const decoded = authenticateToken(req, res);
-
-    if (decoded.error) {
-        return res.status(401).json({ error: decoded.error });
-    }
 
     try {
         const tasks = await pool.query(`
@@ -163,13 +147,8 @@ router.patch('/assignIntern', async(req, res) => {
     }
 });
 
-router.patch('/unassignIntern', async(req, res) => {
+router.patch('/unassignIntern', authenticateToken, async(req, res) => {
     const{program_id, intern_id} = req.body
-    const decoded = authenticateToken(req, res);
-
-    if (decoded.error) {
-        return res.status(401).json({ error: decoded.error });
-    }
 
     try {
         await pool.query(`
