@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(bodyParser.json());
+
 const express = require('express');
 const pool = require('./db'); // Twój plik db.js
 const app = express();
