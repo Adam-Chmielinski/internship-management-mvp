@@ -1,4 +1,5 @@
 const express = require('express');
+const express1 = express;
 const cors = require('cors');
 const pool = require('./db');
 const bodyParser = require('body-parser');
@@ -9,86 +10,13 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(bodyParser.json());
 app.use(express.json());
-
-// Endpoint testowy
-app.get('/test', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT NOW()'); 
-    res.json({
-      status: 'Backend działa',
-      serverTime: result.rows[0]
-    });
-  } catch (err) {
-    res.status(500).json({ status: 'Błąd połączenia z bazą', error: err.message });
-  }
-});
-
-// Endpoint logowania
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1 AND password = $2',
-      [email, password]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ message: 'Niepoprawne dane logowania' });
-    }
-
-    const user = result.rows[0];
-    res.json({ message: 'Zalogowano pomyślnie', user });
-  } catch (err) {
-    console.error('Błąd logowania:', err);
-    res.status(500).json({ error: 'Błąd serwera' });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`Backend działa na http://localhost:${PORT}`);
-});
-const express = require('express');
-const cors = require('cors');
-const pool = require('./db');
-const bodyParser = require('body-parser');
-
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
-app.use(bodyParser.json());
-
-const express = require('express');
-const pool = require('./db'); // Twój plik db.js
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-app.use(express.json());
-
-// Endpoint testowy
-app.get('/test', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT NOW()'); // sprawdza połączenie z bazą
-    res.json({
-      status: 'Backend działa',
-      serverTime: result.rows[0]
-    });
-  } catch (err) {
-    res.status(500).json({ status: 'Błąd połączenia z bazą', error: err.message });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`Backend działa na http://localhost:${PORT}`);
-});
 
 app.get('/test', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
-    res.json({ serverTime: result.rows[0] });
+    res.json({ status: 'Backend działa', serverTime: result.rows[0] });
   } catch (err) {
-    console.error('Błąd połączenia z bazą:', err);
-    res.status(500).json({ error: 'Błąd połączenia z bazą' });
+    res.status(500).json({ status: 'Błąd połączenia z bazą', error: err.message });
   }
 });
 
@@ -107,7 +35,6 @@ app.post('/login', async (req, res) => {
     const user = result.rows[0];
     res.json({ message: 'Zalogowano pomyślnie', user });
   } catch (err) {
-    console.error('Błąd logowania:', err);
     res.status(500).json({ error: 'Błąd serwera' });
   }
 });
@@ -115,3 +42,6 @@ app.post('/login', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Backend działa na http://localhost:${PORT}`);
 });
+
+const app2 = express1();
+app2.get('/test2', (req, res) => res.send('To jest druga instancja Express!'));
