@@ -5,7 +5,7 @@ const app = express();
 
 
 app.use(cors({
-  origin: 'https://twoj-frontend.netlify.app', // zmień na swój Netlify URL
+  origin: 'https://internship-management-mvp.netlify.app',
 }));
 
 const PORT = process.env.PORT || 3000;
