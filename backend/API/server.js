@@ -1,47 +1,75 @@
+@@ -1,62 +1,21 @@
 const express = require('express');
-const express1 = express;
-const cors = require('cors');
-const pool = require('./db');
-const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
+const cors = require('cors'); // żeby frontend mógł robić requesty
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
-app.use(bodyParser.json());
 app.use(express.json());
+// Dodaj CORS dla frontendowej domeny
+app.use(cors({
+  origin: 'https://twoj-frontend.netlify.app', // zmień na swój Netlify URL
+}));
 
-app.get('/test', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT NOW()');
-    res.json({ status: 'Backend działa', serverTime: result.rows[0] });
-  } catch (err) {
-    res.status(500).json({ status: 'Błąd połączenia z bazą', error: err.message });
+const apiFolder = __dirname;
+const PORT = process.env.PORT || 3000;
+
+fs.readdirSync(apiFolder).forEach(file => {
+  if (file === 'server.js' || file.startsWith('_') || !file.endsWith('.js')) return;
+
+  const filePath = path.join(apiFolder, file);
+  const route = require(filePath);
+
+  if (route && typeof route === 'function' && route.name === 'router') {
+    const routeName = '/api/' + path.basename(file, '.js');
+    app.use(routeName, route);
+    console.log(`✅ Loaded router: ${routeName}`);
+  } else if (route && route.use && route.handle) {
+    const routeName = '/api/' + path.basename(file, '.js');
+    app.use(routeName, route);
+    console.log(`✅ Loaded endpoint: ${routeName}`);
+  } else {
+    console.warn(`⚠️ Pominięto ${file} — nie jest poprawnym routerem Express`);
   }
+app.get('/', (req, res) => {
+  res.send('Backend działa!');
 });
 
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1 AND password = $2',
-      [email, password]
-    );
+const routesFolder = path.join(__dirname, 'routes');
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({ message: 'Niepoprawne dane logowania' });
+if (fs.existsSync(routesFolder)) {
+  fs.readdirSync(routesFolder).forEach(file => {
+    if (file.startsWith('_') || !file.endsWith('.js')) return;
+    const filePath = path.join(routesFolder, file);
+    const route = require(filePath);
+
+    if (route && route.use && route.handle) {
+      const routeName = '/api/' + path.basename(file, '.js');
+      app.use(routeName, route);
+      console.log(`✅ Loaded route: ${routeName}`);
+    } else {
+      console.log(`ℹ️ Pominięto ${file} (brak routera Express)`);
     }
+  });
+} else {
+  console.log('⚠️ Folder "routes" nie istnieje – brak endpointów do załadowania.');
+}
 
-    const user = result.rows[0];
-    res.json({ message: 'Zalogowano pomyślnie', user });
-  } catch (err) {
-    res.status(500).json({ error: 'Błąd serwera' });
-  }
+const frontendPath = path.join(__dirname, '../../frontend/build');
+if (fs.existsSync(frontendPath)) {
+  app.use(express.static(frontendPath));
+
+  app.use((req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
+
+app.listen(port, () => {
+  console.log(`🚀 Server is running on port ${port}`);
+app.get('/api/hello', (req, res) => {
+  res.json({ message: 'Cześć z backendu!' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend działa na http://localhost:${PORT}`);
-});
-
-const app2 = express1();
-app2.get('/test2', (req, res) => res.send('To jest druga instancja Express!'));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
