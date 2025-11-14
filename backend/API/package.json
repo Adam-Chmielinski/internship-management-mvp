@@ -11,7 +11,7 @@
     "path": "^0.12.7",
     "fs-ext": "2.1.1",
     "uuid": "^13.0.0"
-  }
+  },
   "scripts":{
     "start": "node server.js"
   }
