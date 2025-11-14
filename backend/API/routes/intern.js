@@ -71,6 +71,8 @@ router.get('/:internId/overview', async (req, res) => {
             [internId]
         );
 
+        const isEnrolled = profileQ.rows[0].program_id !== null;
+
         const [profileRes, progressRes, monitoringRes, documentsRes] =
             await Promise.all([profileQ, progressQ, monitoringQ, documentsQ]);
 
@@ -85,6 +87,7 @@ router.get('/:internId/overview', async (req, res) => {
                 full_name: profile.full_name,
                 training_sector: profile.training_sector,
                 tutor_final_approval: profile.tutor_final_approval,
+                is_enrolled: isEnrolled,
                 program: {
                     id: profile.program_id,
                     name: profile.program_name,
