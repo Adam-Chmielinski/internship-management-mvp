@@ -21,6 +21,7 @@ router.get('/:internId/overview', authenticateToken, async (req, res) => {
                 i.full_name,
                 i.email as intern_email,
                 i.training_sector,
+                i.email,
                 i.tutor_final_approval,
                 prog.id AS program_id,
                 prog.program_name,
@@ -72,6 +73,8 @@ router.get('/:internId/overview', authenticateToken, async (req, res) => {
             [internId]
         );
 
+        const isEnrolled = profileQ.rows[0].program_id !== null;
+
         const [profileRes, progressRes, monitoringRes, documentsRes] =
             await Promise.all([profileQ, progressQ, monitoringQ, documentsQ]);
 
@@ -87,6 +90,7 @@ router.get('/:internId/overview', authenticateToken, async (req, res) => {
                 email: profile.intern_email,
                 training_sector: profile.training_sector,
                 tutor_final_approval: profile.tutor_final_approval,
+                is_enrolled: isEnrolled,
                 program: {
                     id: profile.program_id,
                     name: profile.program_name,
@@ -111,6 +115,34 @@ router.get('/:internId/overview', authenticateToken, async (req, res) => {
         console.error('Error fetching intern overview:', err);
         res.status(500).json({ error: 'Failed to load intern overview' });
     }
+});
+
+router.get('/checklist/:internId', async (req, res) => {
+  const { internId } = req.params;
+
+  if(!Number.isInteger(Number(internId))) {
+    return res.status(400).json({ error: 'Invalid intern ID' });
+  }
+
+  try {
+    const result = await pool.query(`
+      SELECT 
+        ia.id as assignment_id,
+        a.function_description,
+        a.activity_type,
+        ia.status,
+        ia.completion_date
+      FROM "Intern_Activities" ia
+      JOIN "Activities" a ON ia.activity_id = a.id
+      WHERE ia.participant_id = $1
+      ORDER BY a.id
+  `, [internId]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch checklist' });
+  }
 });
 
 module.exports = router;

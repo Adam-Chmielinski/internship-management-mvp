@@ -2,16 +2,14 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { ProtectedRoute } from './Components/ProtectedRoute';
+import { ProtectedRoute } from './Components/Auth/ProtectedRoute';
 import Login from './Components/Auth/Login';
-import HrDashboard from './Components/HrDashboard';
-import SupervisorDashboard from './Components/SupervisorDashboard';
-import InternDashboard from './Components/InternDashboard';
-import Reports from './Components/Reports';
-import FinalDocuments from './Components/FinalDocuments';
-import ParticipantMonitoring from './Components/Monitoring';
-import ActivityChecklist from './Components/ActivityChecklist';
-import ActivityChecklistReadOnly from './Components/ActivityChecklistReadOnly';
+import HrDashboard from './Components/HR/HrDashboard';
+import SupervisorDashboard from './Components/Supervisor/SupervisorDashboard';
+import InternDashboard from './Components/Intern/InternDashboard';
+import ParticipantMonitoring from './Components/Supervisor/Monitoring';
+import ActivityChecklist from './Components/Intern/ActivityChecklist';
+import ActivityChecklistReadOnly from './Components/Supervisor/ActivityChecklistReadOnly';
 
 function App() {
   return (
@@ -51,23 +49,6 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['hr']}>
                 <HrDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/Reports"
-            element={
-              <ProtectedRoute allowedRoles={['hr']}>
-                <Reports />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/FinalDocuments"
-            element={
-              <ProtectedRoute allowedRoles={['hr']}>
-                <FinalDocuments />
               </ProtectedRoute>
             }
           />

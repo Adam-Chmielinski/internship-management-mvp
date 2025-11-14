@@ -87,6 +87,8 @@ router.patch('/interns/approve', authenticateToken, async (req, res) => {
   const supervisorId = Number(req.userId);
   const internId = Number(req.body.participantId);
 
+  console.log(`Supervisor ${supervisorId} approving intern ${internId}`);
+
   if (!Number.isInteger(supervisorId) || !Number.isInteger(internId)) {
     return res.status(400).json({ error: 'Invalid path parameters' });
   }
@@ -181,7 +183,15 @@ router.post('/intern/weekly', authenticateToken, async (req, res) => {
   const supervisorId = Number(req.userId);
   const internId = Number(req.body.participantId);
   //const weekNum = Number.parseInt(req.body.weekNum, 10);
-  const weekNum = 3; // temporarily hardcoded for testing
+  const lastReport = await pool.query(`
+    SELECT week_num
+    FROM "Weekly_Monitoring"
+    WHERE participant_id = $1
+    ORDER BY week_num DESC
+    LIMIT 1
+  `, [internId]);
+
+  const weekNum = lastReport[0] ? lastReport[0]++ : 0; // always next week
   const tutorEvaluation = (req.body.evaluation || '').trim();
 
   // 1) Payload and path validation up-front keeps queries clean and errors obvious

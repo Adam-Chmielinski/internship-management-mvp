@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import './Monitoring.css';
-import API_URL from '../Config/api';
+import API_URL from '../../Config/api';
 
 const Monitoring = () => {
   const { participantId } = useParams();
@@ -13,7 +13,7 @@ const Monitoring = () => {
   const [internData, setInternData] = useState(null);
   const [taskStats, setTaskStats] = useState(null);
   const [weeklyEvaluation, setWeeklyEvaluation] = useState('');
-  const [evaluationHistory, setEvaluationHistory] = useState([]);
+  const [recentMonitoring, setRecentMonitoring] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -26,10 +26,9 @@ const Monitoring = () => {
     setLoading(true);
     await Promise.all([
       fetchParticipantData(),
-      fetchInternDetails(),
       fetchTaskStats(),
       fetchDocuments(),
-      fetchEvaluationHistory()
+      fetchInternData()
     ]);
     setLoading(false);
   };
@@ -52,21 +51,45 @@ const Monitoring = () => {
     }
   };
 
-  const fetchInternDetails = async () => {
+  const fetchInternData = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/supervisor/intern/details/${participantId}`, {
+    
+      if (!token) {
+        logout();
+        navigate('/login');
+        return;
+      }
+
+      // Fetch intern profile and data
+      const response = await fetch(`${API_URL}/intern/${participantId}/overview`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setInternData(data);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          logout();
+          navigate('/login');
+          return;
+        }
+        throw new Error('Failed to fetch intern data');
       }
+      const data = await response.json();
+      console.log('Intern data fetched:', data);
+      setInternData(data);
+    
+      // Extract recentMonitoring from the data (THIS IS THE KEY FIX)
+      if (data.recentMonitoring) {
+        setRecentMonitoring(data.recentMonitoring);
+      }
+
     } catch (error) {
-      console.error('Error fetching intern details:', error);
+      console.error('Error fetching intern data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -148,24 +171,6 @@ const Monitoring = () => {
   }
 };
 
-  const fetchEvaluationHistory = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/supervisor/evaluations/${participantId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setEvaluationHistory(Array.isArray(data) ? data : []);
-      }
-    } catch (error) {
-      console.error('Error fetching evaluation history:', error);
-    }
-  };
-
   const handleEvaluationSubmit = async () => {
     if (!weeklyEvaluation.trim()) {
       alert('Please enter an evaluation before submitting.');
@@ -190,7 +195,7 @@ const Monitoring = () => {
       if (response.ok) {
         alert('Weekly evaluation submitted successfully!');
         setWeeklyEvaluation('');
-        fetchEvaluationHistory(); // Refresh evaluation history
+        fetchInternData(); // This will now properly update recentMonitoring
       } else {
         throw new Error('Failed to submit evaluation');
       }
@@ -220,7 +225,7 @@ const Monitoring = () => {
 
       if (response.ok) {
         alert('Program marked as completed successfully!');
-        navigate('/supervisor-dashboard');
+        navigate('/supervisorDashboard');
       } else {
         throw new Error('Failed to mark complete');
       }
@@ -312,7 +317,7 @@ const Monitoring = () => {
     <div className="monitoring-page">
       {/* Header */}
       <div className="monitoring-header">
-        <button onClick={() => navigate('/supervisor-dashboard')} className="back-btn">
+        <button onClick={() => navigate('/supervisorDashboard')} className="back-btn">
           ← Back to Dashboard
         </button>
         <h1>Participant Monitoring</h1>
@@ -339,9 +344,6 @@ const Monitoring = () => {
               <span className="info-tag">
                 <span className="tag-icon">📚</span>
                 {internData?.profile?.program?.name || 'Program not specified'}
-              </span>
-              <span className="info-tag status-tag">
-                {participant?.status || 'Active'}
               </span>
             </div>
           </div>
@@ -387,25 +389,29 @@ const Monitoring = () => {
           </button>
         </div>
 
-        <div className="monitoring-card evaluation-history-card">
-          <div className="card-icon">📋</div>
-          <h3 className="card-title">Previous Evaluations</h3>
-          <div className="evaluations-list">
-            {evaluationHistory.length === 0 ? (
-              <p className="no-data">No previous evaluations</p>
-            ) : (
-              evaluationHistory.slice(0, 3).map((evaluation, index) => (
-                <div key={index} className="evaluation-item">
-                  <div className="evaluation-header">
-                    <span className="evaluation-week">Week {evaluation.week_num}</span>
-                    <span className="evaluation-date">{formatDate(evaluation.date)}</span>
+        <div className="dashboard-card evaluations-card">
+          <div className="card-icon">📝</div>
+          <h2 className="card-title">Recent Evaluations</h2>
+          <div className="evaluations-content">
+            {recentMonitoring && recentMonitoring.length > 0 ? (
+              <div className="evaluations-list">
+                {recentMonitoring.slice(0, 3).map((evaluation) => (
+                  <div key={evaluation.id} className="evaluation-item">
+                    <div className="evaluation-week">
+                      Week {evaluation.week_num}
+                    </div>
+                    <div className="evaluation-text">
+                      {evaluation.tutor_evaluation}
+                    </div>
                   </div>
-                  <p className="evaluation-text">{evaluation.tutor_evaluation}</p>
-                </div>
-              ))
+                ))}
+              </div>
+            ) : (
+              <p className="no-data">No evaluations yet</p>
             )}
           </div>
         </div>
+
 
         {/* Row 2 - Task Progress Summary and Documents */}
         <div className="monitoring-card task-summary-card">
@@ -516,12 +522,12 @@ const Monitoring = () => {
               <span>Documents uploaded ({documents.length})</span>
             </label>
             <label className="check-item">
-              <input type="checkbox" disabled checked={evaluationHistory.length > 0} />
-              <span>Evaluations submitted ({evaluationHistory.length})</span>
+              <input type="checkbox" disabled checked={recentMonitoring.length > 0} />
+              <span>Evaluations submitted ({recentMonitoring.length})</span>
             </label>
             <label className="check-item">
-              <input type="checkbox" disabled checked={taskStats?.percentage > 80} />
-              <span>Task completion above 80% ({taskStats?.percentage || 0}%)</span>
+              <input type="checkbox" disabled checked={taskStats?.percentage == 100} />
+              <span>All tasks completed ({taskStats?.percentage || 0}%)</span>
             </label>
           </div>
           <button 

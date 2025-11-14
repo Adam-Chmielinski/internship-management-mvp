@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './SupervisorDashboard.css';
-import API_URL from '../Config/api';
+import API_URL from '../../Config/api';
 
 const SupervisorDashboard = () => {
   const [participants, setParticipants] = useState([]);
@@ -38,6 +38,7 @@ const SupervisorDashboard = () => {
         }
 
         const data = await response.json();
+        console.log('Fetched participants:', data);
         setParticipants(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
@@ -92,9 +93,6 @@ const SupervisorDashboard = () => {
                   <p className="participant-sector">
                     Sector: {participant.training_sector || 'Not assigned'}
                   </p>
-                  <span className="participant-status">
-                    {participant.status || 'Active'}
-                  </span>
                 </div>
                 <div className="participant-arrow">→</div>
               </div>
