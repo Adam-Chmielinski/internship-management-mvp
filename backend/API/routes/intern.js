@@ -19,6 +19,7 @@ router.get('/:internId/overview', async (req, res) => {
                 i.id AS intern_id,
                 i.full_name,
                 i.training_sector,
+                i.email,
                 i.tutor_final_approval,
                 prog.id AS program_id,
                 prog.program_name,
@@ -108,6 +109,34 @@ router.get('/:internId/overview', async (req, res) => {
         console.error('Error fetching intern overview:', err);
         res.status(500).json({ error: 'Failed to load intern overview' });
     }
+});
+
+router.get('/checklist/:internId', async (req, res) => {
+  const { internId } = req.params;
+
+  if(!Number.isInteger(Number(internId))) {
+    return res.status(400).json({ error: 'Invalid intern ID' });
+  }
+
+  try {
+    const result = await pool.query(`
+      SELECT 
+        ia.id as assignment_id,
+        a.function_description,
+        a.activity_type,
+        ia.status,
+        ia.completion_date
+      FROM "Intern_Activities" ia
+      JOIN "Activities" a ON ia.activity_id = a.id
+      WHERE ia.participant_id = $1
+      ORDER BY a.id
+  `, [internId]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch checklist' });
+  }
 });
 
 module.exports = router;

@@ -21,12 +21,14 @@ router.get('/interns', async (req, res) => {
 
   try {
     const result = await pool.query(`
-      SELECT i.id, i.full_name, i.training_sector, prog.program_name, i.tutor_final_approval
+      SELECT i.id, i.full_name, i.training_sector, prog.program_name, i.tutor_final_approval, i.email
       FROM "Interns" i
       JOIN "Internship_Programs" prog ON i.program_id = prog.id
       WHERE prog.supervisor_id = $1`,
       [decoded.userId]);
 
+    console.log(result.rows);
+    
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -91,6 +93,8 @@ router.patch('/interns/approve', async (req, res) => {
 
   const supervisorId = Number(decoded.userId);
   const internId = Number(req.body.participantId);
+
+  console.log(`Supervisor ${supervisorId} approving intern ${internId}`);
 
   if (!Number.isInteger(supervisorId) || !Number.isInteger(internId)) {
     return res.status(400).json({ error: 'Invalid path parameters' });
@@ -189,7 +193,15 @@ router.post('/intern/weekly', async (req, res) => {
   const supervisorId = Number(decoded.userId);
   const internId = Number(req.body.participantId);
   //const weekNum = Number.parseInt(req.body.weekNum, 10);
-  const weekNum = 3; // temporarily hardcoded for testing
+  const lastReport = await pool.query(`
+    SELECT week_num
+    FROM "Weekly_Monitoring"
+    WHERE participant_id = $1
+    ORDER BY week_num DESC
+    LIMIT 1
+  `, [internId]);
+
+  const weekNum = lastReport[0] ? lastReport[0]++ : 0; // always next week
   const tutorEvaluation = (req.body.evaluation || '').trim();
 
   // 1) Payload and path validation up-front keeps queries clean and errors obvious
