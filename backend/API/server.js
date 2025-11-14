@@ -8,6 +8,29 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(bodyParser.json());
+const express = require('express');
+const pool = require('./db'); // Twój plik db.js
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(express.json());
+
+// Endpoint testowy
+app.get('/test', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()'); // sprawdza połączenie z bazą
+    res.json({
+      status: 'Backend działa',
+      serverTime: result.rows[0]
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'Błąd połączenia z bazą', error: err.message });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Backend działa na http://localhost:${PORT}`);
+});
 
 app.get('/test', async (req, res) => {
   try {
