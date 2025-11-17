@@ -11,7 +11,7 @@ app.use(cors({
   origin: 'https://internship-management-mvp.netlify.app'
 }));
 
-// Load all .js files in the backend folder except server.js
+// Run all JS files (do not mount anything)
 const apiFolder = __dirname;
 
 fs.readdirSync(apiFolder).forEach(file => {
@@ -19,41 +19,20 @@ fs.readdirSync(apiFolder).forEach(file => {
   if (!file.endsWith('.js')) return;
 
   const filePath = path.join(apiFolder, file);
-  const route = require(filePath);
 
-  const routeName = '/api/' + path.basename(file, '.js');
-  app.use(routeName, route);
-
-  console.log(`Loaded: ${routeName}`);
+  try {
+    require(filePath);   // <-- uruchamia plik
+    console.log(`Executed file: ${file}`);
+  } catch (err) {
+    console.error(`Error executing ${file}:`, err);
+  }
 });
 
-// / route
 app.get('/', (req, res) => {
   res.send('Backend is running');
 });
 
-// Example test route
-app.get('/api/hello', (req, res) => {
-  res.json({ message: 'Hello from backend!' });
-});
-
-// Load routes from routes/ folder if exists
-const routesFolder = path.join(__dirname, 'routes');
-
-if (fs.existsSync(routesFolder)) {
-  fs.readdirSync(routesFolder).forEach(file => {
-    if (!file.endsWith('.js')) return;
-
-    const filePath = path.join(routesFolder, file);
-    const route = require(filePath);
-
-    const routeName = '/api/' + path.basename(file, '.js');
-    app.use(routeName, route);
-
-    console.log(`Loaded route: ${routeName}`);
-  });
-}
-
+// Serve frontend if exists
 const frontendPath = path.join(__dirname, '../../frontend/build');
 
 if (fs.existsSync(frontendPath)) {
