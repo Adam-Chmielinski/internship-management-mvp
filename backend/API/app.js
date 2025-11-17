@@ -31,6 +31,9 @@ app.use('/documents', documentRoutes);
 // Serve uploaded files (so they can be downloaded)
 app.use('../../docs', express.static('docs'))
 
+const certificateRoutes = require('./routes/certificate.js');
+app.use('/certificate', certificateRoutes);
+
 app.get('/', (req, res) => {
   res.send('Hello World!');
 })

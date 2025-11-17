@@ -13,6 +13,18 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+router.get('/fullName', authenticateToken, async (req, res) => {
+    try{
+    const result = await pool.query(`
+        SELECT full_name FROM "Supervisor" WHERE id = $1
+        `,[req.userId]);
+        res.status(200).json(result.rows);
+    } catch(err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database query failed' });
+    }
+})
+
 // GET interns assigned to a supervisor
 router.get('/interns', authenticateToken, async (req, res) => {
 
@@ -179,9 +191,10 @@ router.patch('/interns/approve', authenticateToken, async (req, res) => {
 // POST /supervisor/:supervisorId/interns/:internId/weekly
 // Body: { weekNum: number, tutorEvaluation: string }
 router.post('/intern/weekly', authenticateToken, async (req, res) => {
-
   const supervisorId = Number(req.userId);
   const internId = Number(req.body.participantId);
+  const tutorEvaluation = (req.body.evaluation || '').trim();
+
   //const weekNum = Number.parseInt(req.body.weekNum, 10);
   const lastReport = await pool.query(`
     SELECT week_num
@@ -191,11 +204,11 @@ router.post('/intern/weekly', authenticateToken, async (req, res) => {
     LIMIT 1
   `, [internId]);
 
-  const weekNum = lastReport[0] ? lastReport[0]++ : 0; // always next week
-  const tutorEvaluation = (req.body.evaluation || '').trim();
+  const weekNum = lastReport.rows[0] ? lastReport.rows[0].week_num + 1 : 1; // always next week
 
   // 1) Payload and path validation up-front keeps queries clean and errors obvious
   if (!Number.isInteger(supervisorId) || !Number.isInteger(internId)) {
+    console.log("to nie działa");
     return res.status(400).json({ error: 'Invalid path parameters' });
   }
   if (!Number.isInteger(weekNum) || weekNum < 1) {
