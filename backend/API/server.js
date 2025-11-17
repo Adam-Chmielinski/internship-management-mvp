@@ -8,8 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cors({
-  //origin: 'https://internship-management-mvp.netlify.app', 
-  origin: 'https://internship-management-mvp-8ge3.vercel.app/',
+  origin: 'https://internship-management-mvp.netlify.app', 
 }));
 
 const apiFolder = __dirname;
