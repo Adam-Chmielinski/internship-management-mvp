@@ -332,16 +332,14 @@ router.post('/:internId', async (req, res) => {
 });
 
 router.get('/download', authenticateToken, async (req, res) => {
-    console.log(req.userId);
-    console.log(req.role);
-    const internId = Number(req.userId);console.log(req.role);
+    const internId = Number(req.userId);
     if(req.role !== "Intern")
         return res.status(403).json({ error: 'Access denied' });
     try {
-    const result = await pool.query(
-        `SELECT file_path FROM "Documents"
+    const result = await pool.query(`
+        SELECT file_path FROM "Documents"
         WHERE intern_id = $1 AND doc_type = 'Final Certificate'`
-        [internId]);
+        ,[internId]);
 
     if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Certificate not found' });
