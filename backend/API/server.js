@@ -8,57 +8,43 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cors({
-  //origin: 'https://internship-management-mvp.netlify.app', 
   origin: 'https://172.24.0.67:3000/login',
+    //origin: 'https://internship-management-mvp.netlify.app', 
 }));
 
-const apiFolder = __dirname;
+function loadAllFiles(folderPath, prefix = '/api') {
+  if (!fs.existsSync(folderPath)) return;
 
-fs.readdirSync(apiFolder).forEach(file => {
-  if (file === 'server.js' || file.startsWith('_') || !file.endsWith('.js')) return;
+  fs.readdirSync(folderPath).forEach(file => {
+    if (!file.endsWith('.js')) return;
 
-  const filePath = path.join(apiFolder, file);
-  const route = require(filePath);
+    const filePath = path.join(folderPath, file);
+    const module = require(filePath);
+    const routeName = prefix + '/' + path.basename(file, '.js');
 
-  if (route && typeof route === 'function' && route.name === 'router') {
-    const routeName = '/api/' + path.basename(file, '.js');
-    app.use(routeName, route);
-    console.log(`✅ Loaded router: ${routeName}`);
-  } else if (route && route.use && route.handle) {
-    const routeName = '/api/' + path.basename(file, '.js');
-    app.use(routeName, route);
-    console.log(`✅ Loaded endpoint: ${routeName}`);
-  } else {
-    console.warn(`⚠️ Pominięto ${file} — nie jest poprawnym routerem Express`);
-  }
-});
+    if (module && typeof module === 'function' && module.name === 'router') {
+      app.use(routeName, module);
+      console.log(`✅ Loaded router: ${routeName}`);
+    } else if (module && module.use && module.handle) {
+      app.use(routeName, module);
+      console.log(`✅ Loaded endpoint: ${routeName}`);
+    } else {
+      console.log(`ℹ️ Loaded file (not a router): ${routeName}`);
+    }
+  });
+}
+
+loadAllFiles(__dirname);
+const routesFolder = path.join(__dirname, 'routes');
+loadAllFiles(routesFolder);
 
 app.get('/', (req, res) => {
-  res.send('Backend działa!');
+  res.send('Backend is running!');
 });
 
 app.get('/api/hello', (req, res) => {
-  res.json({ message: 'Cześć z backendu!' });
+  res.json({ message: 'Hello from backend!' });
 });
-
-const routesFolder = path.join(__dirname, 'routes');
-if (fs.existsSync(routesFolder)) {
-  fs.readdirSync(routesFolder).forEach(file => {
-    if (file.startsWith('_') || !file.endsWith('.js')) return;
-    const filePath = path.join(routesFolder, file);
-    const route = require(filePath);
-
-    if (route && route.use && route.handle) {
-      const routeName = '/api/' + path.basename(file, '.js');
-      app.use(routeName, route);
-      console.log(`✅ Loaded route: ${routeName}`);
-    } else {
-      console.log(`ℹ️ Pominięto ${file} (brak routera Express)`);
-    }
-  });
-} else {
-  console.log('⚠️ Folder "routes" nie istnieje – brak endpointów do załadowania.');
-}
 
 const frontendPath = path.join(__dirname, '../../frontend/build');
 if (fs.existsSync(frontendPath)) {
@@ -67,6 +53,10 @@ if (fs.existsSync(frontendPath)) {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
