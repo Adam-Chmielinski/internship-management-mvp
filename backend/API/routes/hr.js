@@ -7,6 +7,18 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+router.get('/fullName', authenticateToken, async (req, res) => {
+    try{
+    const result = await pool.query(`
+        SELECT full_name FROM "HR" WHERE id = $1
+        `,[req.userId]);
+        res.status(200).json(result.rows);
+    } catch(err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database query failed' });
+    }
+})
+
 router.get('/internships', authenticateToken, async (req, res) => {
 
     try {

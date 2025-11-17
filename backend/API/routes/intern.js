@@ -57,7 +57,7 @@ router.get('/:internId/overview', authenticateToken, async (req, res) => {
                 tutor_id
                 FROM "Weekly_Monitoring"
                 WHERE participant_id = $1
-                ORDER BY week_num DESC LIMIT 3`,
+                ORDER BY week_num DESC`,
             [internId]
         );
 

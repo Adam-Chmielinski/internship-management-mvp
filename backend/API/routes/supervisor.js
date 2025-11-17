@@ -13,6 +13,18 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+router.get('/fullName', authenticateToken, async (req, res) => {
+    try{
+    const result = await pool.query(`
+        SELECT full_name FROM "Supervisor" WHERE id = $1
+        `,[req.userId]);
+        res.status(200).json(result.rows);
+    } catch(err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database query failed' });
+    }
+})
+
 // GET interns assigned to a supervisor
 router.get('/interns', authenticateToken, async (req, res) => {
 
@@ -191,7 +203,7 @@ router.post('/intern/weekly', authenticateToken, async (req, res) => {
     LIMIT 1
   `, [internId]);
 
-  const weekNum = lastReport[0] ? lastReport[0]++ : 0; // always next week
+  const weekNum = lastReport.rows[0].week_num ? lastReport.rows[0].week_num + 1 : 0; // always next week
   const tutorEvaluation = (req.body.evaluation || '').trim();
 
   // 1) Payload and path validation up-front keeps queries clean and errors obvious
