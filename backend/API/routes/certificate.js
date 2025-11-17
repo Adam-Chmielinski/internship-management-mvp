@@ -11,6 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const { env } = require('process');
+const { authenticateToken } = require('../auth');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -109,11 +110,11 @@ router.post('/:internId', async (req, res) => {
     }
 });
 
-router.get('/download/', async (req, res) => {
-    const decoded = authenticateToken(req, res)
-    console.log(decoded);
-    const internId = Number(decoded.userId);
-    if(decoded.role !== "Intern")
+router.get('/download', authenticateToken, async (req, res) => {
+    console.log(req.userId);
+    console.log(req.role);
+    const internId = Number(req.userId);console.log(req.role);
+    if(req.role !== "Intern")
         return res.status(403).json({ error: 'Access denied' });
     try {
     const result = await pool.query(

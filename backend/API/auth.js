@@ -8,7 +8,9 @@ export function authenticateToken(req, res, next) {
     if (!token) return {error: "Token missing"};
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
+        console.log(decoded);
         req.userId = decoded.userId;
+        req.role = decoded.roleType;
         next();
     } catch (error) {
         res.status(401).json({ error: 'Invalid token' });
