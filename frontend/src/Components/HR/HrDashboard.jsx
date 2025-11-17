@@ -37,6 +37,7 @@ const HrDashboard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [fullName, setFullName] = useState('');
   
   // New state for tracking pending assignments
   const [pendingAssignments, setPendingAssignments] = useState({});
@@ -66,6 +67,32 @@ const HrDashboard = () => {
       if (internshipsResponse.ok) {
         const data = await internshipsResponse.json();
         setInternships(data);
+      }
+      
+      // Fetch HR full name
+      const fullNameResponse = await fetch(`${API_URL}/hr/fullName`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (fullNameResponse.ok) {
+        const data = await fullNameResponse.json();
+        console.log('HR fullName response data:', data);
+        
+        // Handle the array response with an object containing full_name
+        if (Array.isArray(data) && data.length > 0 && data[0].full_name) {
+          setFullName(data[0].full_name);
+        } else if (typeof data === 'string') {
+          setFullName(data);
+        } else if (data.name) {
+          setFullName(data.name);
+        } else if (data.fullName) {
+          setFullName(data.fullName);
+        } else if (data.full_name) {
+          setFullName(data.full_name);
+        } else {
+          console.log('Unexpected HR name data structure:', data);
+        }
       }
 
       // Fetch all interns for dropdown
@@ -363,12 +390,13 @@ const HrDashboard = () => {
       {/* Header */}
       <div className="dashboard-header">
         <h1>HR Dashboard</h1>
-        <p>Welcome, {user?.name || 'HR Manager'}</p>
+        <p>Welcome, {fullName || user?.fullName || 'HR Manager'}</p>
         <button onClick={handleLogout} className="logout-btn">
           Log Out
         </button>
       </div>
 
+      {/* Rest of the component remains the same... */}
       {/* Stats Overview */}
       <div className="stats-overview">
         <div className="stat-card">

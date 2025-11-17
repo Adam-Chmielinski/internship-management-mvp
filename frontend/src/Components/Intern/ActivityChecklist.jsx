@@ -13,47 +13,79 @@ function ActivityChecklist({ participantId }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Use the same approach as supervisor view
-    const internId = participantId || user?.id;
-    console.log('Fetching tasks for intern ID:', internId);
-    
-    fetch(`${API_URL}/supervisor/checklist/${internId}`)
-      .then(res => res.json())
-      .then(data => {
+    const fetchTasks = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No token found');
+          logout();
+          navigate('/login');
+          return;
+        }
+
+        const internId = participantId || user?.id;
+        console.log('Fetching tasks for intern ID:', internId);
+        
+        const response = await fetch(`${API_URL}/supervisor/checklist/${internId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.error('Unauthorized - redirecting to login');
+            logout();
+            navigate('/login');
+            return;
+          }
+          throw new Error(`Failed to fetch tasks: ${response.status}`);
+        }
+
+        const data = await response.json();
         console.log('Tasks data received:', data);
         setTasks(data);
-        setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('Error fetching tasks:', err);
         setTasks([]); // Set to empty array on error
+      } finally {
         setLoading(false);
-      });
-  }, [user?.id, participantId]);
+      }
+    };
 
-  const handleStatusChange = (taskId, newStatus) => {
-    setUpdating(taskId);
+    fetchTasks();
+  }, [user?.id, participantId, logout, navigate]);
+
+  const handleStatusChange = async (task_id, newStatus) => {
+    setUpdating(task_id);
     
-    fetch(`${API_URL}/checklist/update/${taskId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskId, status: newStatus }),
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to update');
-        // Update the task in the state
-        setTasks(currentTasks => 
-          currentTasks.map(task =>
-            task.assignment_id === taskId ? { ...task, status: newStatus } : task
-          )
-        );
-        if (newStatus === 'Completed') {
-          setTimeout(() => {
-          }, 100);
-        }
-      })
-      .catch(() => alert('Failed to update status'))
-      .finally(() => setUpdating(null));
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/checklist/update/${task_id}`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ task_id, status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update');
+      }
+
+      // Update the task in the state
+      setTasks(currentTasks => 
+        currentTasks.map(task =>
+          task.assignment_id === task_id ? { ...task, status: newStatus } : task
+        )
+      );
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update status');
+    } finally {
+      setUpdating(null);
+    }
   };
 
   const handleGoBack = () => {
@@ -92,6 +124,9 @@ function ActivityChecklist({ participantId }) {
   if (!tasks.length) {
     return (
       <div className="checklist-container">
+        <button onClick={handleGoBack} className="back-to-dashboard-btn">
+          ← Back to Dashboard
+        </button>
         <div className="empty-message">No tasks assigned yet.</div>
       </div>
     );

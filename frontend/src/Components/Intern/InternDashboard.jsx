@@ -67,6 +67,7 @@ const InternDashboard = () => {
       }
 
       const data = await response.json();
+      console.log(data);
       setInternData(data);
 
     } catch (err) {
@@ -80,7 +81,7 @@ const InternDashboard = () => {
     try {
       setProcessingAction(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/intern/certificate/download`, {
+      const response = await fetch(`${API_URL}/certificate/download`, {
         headers: {
           'Authorization': `Bearer ${token}`, 
         },
@@ -106,32 +107,7 @@ const InternDashboard = () => {
       setProcessingAction(false);
     }
   };
-
-  const handleEmailCertificate = async () => {
-    try {
-      setProcessingAction(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/intern/certificate/email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        alert('Certificate has been sent to your registered email address!');
-      } else {
-        alert('Failed to send certificate');
-      }
-    } catch (err) {
-      alert('Error sending certificate');
-      console.error(err);
-    } finally {
-      setProcessingAction(false);
-    }
-  };
-
+  
   const handleUnenroll = async () => {
     const confirmed = window.confirm(
       'Are you sure you want to unenroll from this internship?\n\n' +
@@ -251,7 +227,7 @@ const InternDashboard = () => {
       <div className="intern-dashboard">
         <div className="dashboard-header">
           <h1>Intern Dashboard</h1>
-          <p>Welcome, {user?.name || 'Intern'}</p>
+          <p>Welcome, {internData.profile?.full_name || 'Intern'}</p>
           <button onClick={handleLogout} className="logout-btn">
             Log Out
           </button>

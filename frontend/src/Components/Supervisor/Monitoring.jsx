@@ -225,6 +225,7 @@ const Monitoring = () => {
 
       if (response.ok) {
         alert('Program marked as completed successfully!');
+        handleEmailCertificate();
         navigate('/supervisorDashboard');
       } else {
         throw new Error('Failed to mark complete');
@@ -274,6 +275,29 @@ const Monitoring = () => {
     logout();
     navigate('/login');
   };
+
+  const handleEmailCertificate = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/certificate/${participantId}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+  
+        if (response.ok) {
+          alert('Certificate has been sent to your registered email address!');
+        } else {
+          alert('Failed to send certificate');
+        }
+      } catch (err) {
+        alert('Error sending certificate');
+        console.error(err);
+      } finally {
+      }
+    };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';

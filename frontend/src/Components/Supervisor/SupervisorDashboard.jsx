@@ -9,9 +9,62 @@ const SupervisorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { user, logout } = useAuth();
+  const [supervisorName, setSupervisorName] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchSupervisorName = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.log('No token found for supervisor name fetch');
+          return;
+        }
+
+        console.log('Fetching supervisor name from:', `${API_URL}/supervisor/fullName`);
+        
+        const response = await fetch(`${API_URL}/supervisor/fullName`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        console.log('Supervisor name response status:', response.status);
+
+        if (!response.ok) {
+          console.error('Failed to fetch supervisor name, status:', response.status);
+          if (response.status === 401) {
+            logout();
+            navigate('/login');
+            return;
+          }
+          return;
+        }
+
+        const data = await response.json();
+        console.log('Supervisor name response data:', data);
+        
+        // Handle the array response with an object containing full_name
+        if (Array.isArray(data) && data.length > 0 && data[0].full_name) {
+          setSupervisorName(data[0].full_name);
+        } else if (typeof data === 'string') {
+          setSupervisorName(data);
+        } else if (data.name) {
+          setSupervisorName(data.name);
+        } else if (data.fullName) {
+          setSupervisorName(data.fullName);
+        } else if (data.full_name) {
+          setSupervisorName(data.full_name);
+        } else {
+          console.log('Unexpected data structure:', data);
+        }
+        
+      } catch (err) {
+        console.error('Error in fetchSupervisorName:', err);
+      }
+    };
+
     const fetchParticipants = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -42,12 +95,20 @@ const SupervisorDashboard = () => {
         setParticipants(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message);
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchParticipants();
+    // Fetch both in parallel but handle loading state properly
+    const fetchAllData = async () => {
+      setLoading(true);
+      await Promise.all([
+        fetchSupervisorName(),
+        fetchParticipants()
+      ]);
+      setLoading(false);
+    };
+
+    fetchAllData();
   }, [logout, navigate]);
 
   const handleParticipantClick = (participantId) => {
@@ -66,7 +127,7 @@ const SupervisorDashboard = () => {
     <div className="supervisor-dashboard">
       <div className="dashboard-header">
         <h1>Supervisor Dashboard</h1>
-        <p>Welcome, {user?.name || `Supervisor #${user?.id}`}</p>
+        <p>Welcome, {supervisorName || user?.fullName || `Supervisor #${user?.id}`}</p>
         <button onClick={handleLogout} className="logout-btn">
           Log Out
         </button>
@@ -101,7 +162,7 @@ const SupervisorDashboard = () => {
         )}
       </div>
     </div>
-  );
+  ); 
 };
 
 export default SupervisorDashboard;
