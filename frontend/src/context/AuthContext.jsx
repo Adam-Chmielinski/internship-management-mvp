@@ -1,6 +1,5 @@
 // src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 import API_URL from '../Config/api';
 
 const AuthContext = createContext();
@@ -26,15 +25,33 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/login`, {
-        email,
-        password,
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
-      
-      console.log("Full API Response:", response.data);
+
+      // Parse the response
+      const data = await response.json();
+      console.log("Full API Response:", data);
+
+      // Check if the request was successful
+      if (!response.ok) {
+        console.error("Error response:", data);
+        const errorMessage = data.message || 'Incorrect email or password';
+        return {
+          success: false,
+          message: errorMessage,
+        };
+      }
 
       // Destructure based on your actual API response
-      const { token, id, role: userRole } = response.data;
+      const { token, id, role: userRole } = data;
 
       if (token && userRole && id) {
         // Store in localStorage
@@ -52,11 +69,11 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Login failed:", error);
-      console.error("Error response:", error.response?.data);
-      const errorMessage = error.response?.data?.message || 'Incorrect email or password';
+      
+      // Handle network errors or JSON parsing errors
       return {
         success: false,
-        message: errorMessage,
+        message: 'Network error or server is unavailable. Please try again.',
       };
     } finally {
       setLoading(false);

@@ -287,6 +287,7 @@ const Monitoring = () => {
       return dateString;
     }
   };
+  const text = ""
 
   if (loading) {
     return (
@@ -323,19 +324,19 @@ const Monitoring = () => {
         <h1>Participant Monitoring</h1>
         <p>Manage and track intern progress</p>
         <button onClick={handleLogout} className="logout-btn">
-          🚪 Log Out
+          Log Out 
         </button>
       </div>
 
-      {/* Participant Info Card */}
+      {/* Participant Info Card */} 
       <div className="participant-info-section">
         <div className="info-card main-info">
-          <div className="info-avatar">
+          <div className="info-avatar"> 
             {(participant?.full_name || participant?.name || 'P')[0].toUpperCase()}
           </div>
           <div className="info-details">
             <h2>{participant?.full_name || participant?.name || 'Participant'}</h2>
-            <p className="info-email">{participant?.email || 'No email'}</p>
+            <p className="info-email">{internData?.profile?.email || 'No email'}</p>
             <div className="info-tags">
               <span className="info-tag">
                 <span className="tag-icon">💼</span>
@@ -372,11 +373,12 @@ const Monitoring = () => {
         {/* Row 1 - Weekly Evaluation and Previous Evaluations */}
         <div className="monitoring-card evaluation-input-card">
           <div className="card-icon">📝</div>
-          <h3 className="card-title">Submit Weekly Evaluation</h3>
+          <h3 className="card-title">Submit Weekly Evaluation - Week {recentMonitoring.length + 1}</h3>
           <textarea
             value={weeklyEvaluation}
             onChange={(e) => setWeeklyEvaluation(e.target.value)}
-            placeholder="Enter your evaluation of the intern's performance this week..."
+
+            placeholder={"Enter your evaluation of the intern's performance for week "+ (recentMonitoring.length + 1)+"..."}
             rows="5"
             className="evaluation-textarea"
           />
@@ -391,11 +393,11 @@ const Monitoring = () => {
 
         <div className="dashboard-card evaluations-card">
           <div className="card-icon">📝</div>
-          <h2 className="card-title">Recent Evaluations</h2>
+          <h2 className="card-title">Previous Evaluations</h2>
           <div className="evaluations-content">
             {recentMonitoring && recentMonitoring.length > 0 ? (
               <div className="evaluations-list">
-                {recentMonitoring.slice(0, 3).map((evaluation) => (
+                {recentMonitoring.map((evaluation) => (
                   <div key={evaluation.id} className="evaluation-item">
                     <div className="evaluation-week">
                       Week {evaluation.week_num}
@@ -421,7 +423,7 @@ const Monitoring = () => {
             <>
               <div className="task-stats-summary">
                 <div className="stats-circle">
-                  <svg className="progress-ring" width="120" height="120">
+                  <svg className="progress-ring" viewBox="0 0 120 120">
                     <circle
                       className="progress-ring-bg"
                       strokeWidth="8"

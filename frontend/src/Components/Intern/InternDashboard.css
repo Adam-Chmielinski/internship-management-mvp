@@ -279,9 +279,11 @@
 .evaluations-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1rem; 
+  max-height: 180px; 
+  overflow-y: auto;
 }
-
+ 
 .evaluation-item {
   padding: 1rem;
   background: #f8f9fa;
@@ -521,7 +523,7 @@
 .file-input-wrapper {
   flex: 1;
   position: relative;
-  min-width: 250px;
+  min-width: 250px; 
 }
 
 .file-input {
@@ -608,7 +610,7 @@
 }
 
 .recent-documents li {
-  padding: 0.5rem 0;
+  padding: 0.5rem 0; 
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -651,5 +653,225 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+}
+/* Add to existing InternDashboard.css */
+
+/* Not Enrolled State */
+.not-enrolled-card {
+  background: white;
+  border-radius: 16px;
+  padding: 4rem 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+.not-enrolled-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
+.not-enrolled-card h2 {
+  color: #333;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.not-enrolled-card p {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.not-enrolled-subtext {
+  font-size: 0.95rem !important;
+  color: #999 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 2rem !important;
+}
+
+.browse-programs-btn {
+  padding: 0.875rem 2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.browse-programs-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Completion Celebration Card */
+.completion-celebration-card {
+  background: linear-gradient(135deg, #10b98115 0%, #34d39915 100%);
+  border: 2px solid #10b981;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.celebration-content {
+  text-align: center;
+}
+
+.celebration-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.completion-celebration-card h2 {
+  color: #059669;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.celebration-text {
+  color: #064e3b;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin-bottom: 2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.celebration-stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.celebration-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #10b981;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.completion-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.completion-btn {
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 180px;
+}
+
+.completion-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.completion-btn.download-cert {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.completion-btn.download-cert:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.completion-btn.email-cert {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: white;
+}
+
+.completion-btn.email-cert:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.completion-btn.unenroll {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.completion-btn.unenroll:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .celebration-stats {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .completion-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .completion-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .celebration-icon {
+    font-size: 3rem;
+  } 
+
+  .completion-celebration-card h2 {
+    font-size: 1.5rem; 
   }
 }
