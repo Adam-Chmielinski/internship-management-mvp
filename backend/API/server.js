@@ -8,8 +8,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cors({
-  origin: 'https://172.24.0.67:3000/login',
-    //origin: 'https://internship-management-mvp.netlify.app', 
+  //origin: 'https://172.24.0.67:3000/login',
+    origin: 'https://internship-management-mvp.netlify.app', 
 }));
 
 function loadAllFiles(folderPath, prefix = '/api') {
