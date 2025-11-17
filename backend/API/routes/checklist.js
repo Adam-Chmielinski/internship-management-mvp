@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const cors = require('cors');
+const { authenticateToken } = require('../auth');
 const router = express.Router();
 
 
@@ -28,9 +29,9 @@ router.get('/:participantId', async (req, res) => {
     }
 });
 
-router.post('/update/:activityId', async(req, res) => {
+router.post('/update/:task_id', authenticateToken, async(req, res) => {
   try {
-    const { activityId } = req.params;
+    const { task_id } = req.params;
     const { status } = req.body;
 
     const completionDate = status === "Completed" ? new Date() : null;
@@ -45,7 +46,7 @@ router.post('/update/:activityId', async(req, res) => {
        SET status = $1, completion_date = $2
        WHERE id = $3
        RETURNING *`,
-      [status, completionDate, activityId]
+      [status, completionDate, task_id]
     );
 
     res.json({'message': 'Activity updated successfully', 'activity': result.rows[0]});
