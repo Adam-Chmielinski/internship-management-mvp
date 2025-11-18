@@ -46,7 +46,7 @@ function ActivityChecklistReadOnly() {
         setTasks(data);
       } catch (err) {
         console.error('Error fetching tasks:', err);
-        setTasks([]); // Set to empty array on error
+        setTasks([]); 
       } finally {
         setLoading(false);
       }

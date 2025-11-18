@@ -15,7 +15,6 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Background Decorations */
 .bg-decoration {
   position: absolute;
   width: 100%;
@@ -71,7 +70,6 @@
   }
 }
 
-/* Login Container */
 .login-container {
   width: 100%;
   max-width: 420px;
@@ -95,7 +93,6 @@
   }
 }
 
-/* Login Header */
 .login-header {
   text-align: center;
   padding: 2.5rem 2rem 1.5rem;
@@ -144,7 +141,6 @@
   opacity: 0.95;
 }
 
-/* Login Form */
 .login-form {
   padding: 1rem;
 }
@@ -211,7 +207,6 @@
   opacity: 1;
 }
 
-/* Error Message */
 .error-message {
   display: flex;
   align-items: center;
@@ -236,7 +231,6 @@
   20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 
-/* Login Button */
 .login-button {
   width: 100%;
   padding: 0.875rem;
@@ -269,7 +263,6 @@
   cursor: not-allowed;
 }
 
-/* Loading Spinner */
 .loading-spinner {
   width: 18px;
   height: 18px;
@@ -283,7 +276,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* Form Footer */
 .form-footer {
   text-align: center;
 }
@@ -300,7 +292,6 @@
   text-decoration: underline;
 }
 
-/* Login Footer */
 .login-footer {
   padding: 1rem;
   background: #f9fafb;
@@ -313,7 +304,6 @@
   font-size: 0.85rem;
 }
 
-/* Responsive Design */
 @media (max-width: 480px) {
   .login-container {
     margin: 1rem;
@@ -337,7 +327,6 @@
   }
 }
 
-/* Accessibility Improvements */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -345,9 +334,8 @@
   }
 }
 
-/* Focus Styles for Keyboard Navigation */
 .login-button:focus-visible,
-.forgot-link:focus-visible,
+.forgot-link:focus-visible,s
 .toggle-password:focus-visible {
   outline: 2px solid #667eea;
   outline-offset: 2px;

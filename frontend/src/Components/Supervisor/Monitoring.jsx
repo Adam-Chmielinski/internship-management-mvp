@@ -9,90 +9,132 @@ const Monitoring = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   
-  const [participant, setParticipant] = useState(null);
-  const [internData, setInternData] = useState(null);
-  const [taskStats, setTaskStats] = useState(null);
-  const [weeklyEvaluation, setWeeklyEvaluation] = useState('');
-  const [recentMonitoring, setRecentMonitoring] = useState([]);
+  // Separate states for each endpoint
+  const [profile, setProfile] = useState(null);
+  const [progress, setProgress] = useState(null);
+  const [monitoring, setMonitoring] = useState([]);
   const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Loading states for each section
+  const [loadingStates, setLoadingStates] = useState({
+    profile: true,
+    progress: true,
+    monitoring: true,
+    documents: true
+  });
+  
+  const [weeklyEvaluation, setWeeklyEvaluation] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ text: '', type: '' });
 
-  useEffect(() => {
-    fetchAllData();
-  }, [participantId]);
-
-  const fetchAllData = async () => {
-    setLoading(true);
-    await Promise.all([
-      fetchParticipantData(),
-      fetchTaskStats(),
-      fetchDocuments(),
-      fetchInternData()
-    ]);
-    setLoading(false);
+  const showStatus = (text, type = 'info') => {
+    setStatusMessage({ text, type });
+    setTimeout(() => setStatusMessage({ text: '', type: '' }), 3000);
   };
 
-  const fetchParticipantData = async () => {
+  // Fetch profile data
+  const fetchProfileData = async () => {
     try {
+      setLoadingStates(prev => ({ ...prev, profile: true }));
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/supervisor/intern/${participantId}`, {
+      
+      const response = await fetch(`${API_URL}/intern/${participantId}/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        setParticipant(data);
+        setProfile(data);
       }
     } catch (error) {
-      console.error('Error fetching participant:', error);
+      console.error('Error fetching profile:', error);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, profile: false }));
     }
   };
 
-  const fetchInternData = async () => {
+  // Fetch progress data
+  const fetchProgressData = async () => {
     try {
-      setLoading(true);
+      setLoadingStates(prev => ({ ...prev, progress: true }));
       const token = localStorage.getItem('token');
-    
-      if (!token) {
-        logout();
-        navigate('/login');
-        return;
-      }
-
-      // Fetch intern profile and data
-      const response = await fetch(`${API_URL}/intern/${participantId}/overview`, {
+      
+      const response = await fetch(`${API_URL}/intern/${participantId}/progress`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          logout();
-          navigate('/login');
-          return;
-        }
-        throw new Error('Failed to fetch intern data');
+      if (response.ok) {
+        const data = await response.json();
+        setProgress(data);
       }
-      const data = await response.json();
-      console.log('Intern data fetched:', data);
-      setInternData(data);
-    
-      // Extract recentMonitoring from the data (THIS IS THE KEY FIX)
-      if (data.recentMonitoring) {
-        setRecentMonitoring(data.recentMonitoring);
-      }
-
     } catch (error) {
-      console.error('Error fetching intern data:', error);
+      console.error('Error fetching progress:', error);
     } finally {
-      setLoading(false);
+      setLoadingStates(prev => ({ ...prev, progress: false }));
     }
   };
 
+  // Fetch monitoring data (evaluations)
+  const fetchMonitoringData = async () => {
+    try {
+      setLoadingStates(prev => ({ ...prev, monitoring: true }));
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_URL}/intern/${participantId}/monitoring`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Monitoring data received:', data);
+        
+        // Extract monitoring array from response
+        const monitoringArray = data.monitoring || data.evaluations || data.data || [];
+        setMonitoring(monitoringArray);
+      }
+    } catch (error) {
+      console.error('Error fetching monitoring:', error);
+      setMonitoring([]);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, monitoring: false }));
+    }
+  };
+
+  // Fetch documents data
+  const fetchDocumentsData = async () => {
+    try {
+      setLoadingStates(prev => ({ ...prev, documents: true }));
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_URL}/intern/${participantId}/documents`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Documents data received:', data);
+        
+        // Extract documents array from response
+        const documentsArray = data.documents || data.data || [];
+        setDocuments(documentsArray);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      setDocuments([]);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, documents: false }));
+    }
+  };
+
+  // Fetch task stats from supervisor endpoint
   const fetchTaskStats = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -108,72 +150,33 @@ const Monitoring = () => {
         const total = tasks.length;
         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
         
-        setTaskStats({
-          completed,
-          total,
-          percentage,
+        // Update progress state with task stats
+        setProgress(prev => ({
+          ...prev,
+          completed_tasks: completed,
+          total_tasks: total,
+          percent: percentage,
           pending: tasks.filter(t => t.status === 'Pending').length,
           inProgress: tasks.filter(t => t.status === 'In Progress' || t.status === 'In progress').length
-        });
+        }));
       }
     } catch (error) {
       console.error('Error fetching task stats:', error);
     }
   };
 
-  const fetchDocuments = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    console.log('Fetching documents for participantId:', participantId);
-    
-    const response = await fetch(`${API_URL}/documents/${participantId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Raw documents response:', data);
-      
-      // Handle different response formats
-      let documentsArray = [];
-      
-      // If data is already an array
-      if (Array.isArray(data)) {
-        documentsArray = data;
-      }
-      // If data is an object with numbered keys (like {0: {...}, 1: {...}})
-      else if (typeof data === 'object' && data !== null) {
-        // Check if it has a documents property
-        if (data.documents && Array.isArray(data.documents)) {
-          documentsArray = data.documents;
-        }
-        // Check if it has a data property
-        else if (data.data && Array.isArray(data.data)) {
-          documentsArray = data.data;
-        }
-        // Convert object with numbered keys to array
-        else {
-          documentsArray = Object.values(data);
-        }
-      }
-      
-      console.log('Processed documents array:', documentsArray);
-      setDocuments(documentsArray);
-    } else {
-      console.error('Failed to fetch documents, status:', response.status);
-      setDocuments([]);
-    }
-  } catch (error) {
-    console.error('Error fetching documents:', error);
-    setDocuments([]);
-  }
-};
+  // Initial load - fetch all data
+  useEffect(() => {
+    fetchProfileData();
+    fetchProgressData();
+    fetchMonitoringData();
+    fetchDocumentsData();
+    fetchTaskStats();
+  }, [participantId]);
 
   const handleEvaluationSubmit = async () => {
     if (!weeklyEvaluation.trim()) {
-      alert('Please enter an evaluation before submitting.');
+      showStatus('Please enter an evaluation before submitting', 'error');
       return;
     }
 
@@ -193,21 +196,36 @@ const Monitoring = () => {
       });
 
       if (response.ok) {
-        alert('Weekly evaluation submitted successfully!');
+        showStatus('✓ Weekly evaluation submitted successfully!', 'success');
         setWeeklyEvaluation('');
-        fetchInternData(); // This will now properly update recentMonitoring
+        // Only refresh monitoring data, not everything
+        await fetchMonitoringData();
       } else {
         throw new Error('Failed to submit evaluation');
       }
     } catch (error) {
-      alert('Error submitting evaluation. Please try again.');
+      showStatus('✗ Error submitting evaluation. Please try again.', 'error');
       console.error('Error:', error);
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Check if all requirements are met for completion
+  const areAllRequirementsMet = () => {
+    const hasDocuments = documents.length > 0;
+    const hasEvaluations = monitoring.length > 0;
+    const allTasksCompleted = progress?.percent === 100;
+    
+    return hasDocuments && hasEvaluations && allTasksCompleted;
+  };
+
   const handleMarkComplete = async () => {
+    if (!areAllRequirementsMet()) {
+      showStatus('⚠️ Please complete all requirements before marking the program as complete', 'error');
+      return;
+    }
+
     if (!window.confirm('Are you sure you want to mark this program as completed for this participant?')) {
       return;
     }
@@ -224,19 +242,19 @@ const Monitoring = () => {
       });
 
       if (response.ok) {
-        alert('Program marked as completed successfully!');
+        showStatus('✓ Program marked as completed successfully!', 'success');
         handleEmailCertificate();
-        navigate('/supervisorDashboard');
+        setTimeout(() => navigate('/supervisorDashboard'), 2000);
       } else {
         throw new Error('Failed to mark complete');
       }
     } catch (error) {
-      alert('Error marking program as complete. Please try again.');
+      showStatus('✗ Error marking program as complete. Please try again.', 'error');
       console.error('Error:', error);
     }
   };
 
-    const handleDownload = async (documentId, docType) => {
+  const handleDownload = async (documentId, docType) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/documents/download/${documentId}`, {
@@ -250,25 +268,24 @@ const Monitoring = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        // Generate filename based on doc type and current date
         const fileName = `${docType.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        showStatus(`✓ Downloaded ${docType} successfully`, 'success');
       } else {
         throw new Error('Download failed');
       }
     } catch (error) {
-      alert('Error downloading document');
+      showStatus('✗ Error downloading document', 'error');
       console.error('Error:', error);
     }
   };
 
   const handleViewTasks = () => {
     navigate(`/supervisorChecklist/${participantId}`);
-    console.log(participantId);
   };
 
   const handleLogout = () => {
@@ -277,27 +294,26 @@ const Monitoring = () => {
   };
 
   const handleEmailCertificate = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/certificate/${participantId}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-  
-        if (response.ok) {
-          alert('Certificate has been sent to your registered email address!');
-        } else {
-          alert('Failed to send certificate');
-        }
-      } catch (err) {
-        alert('Error sending certificate');
-        console.error(err);
-      } finally {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/certificate/${participantId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        showStatus('✓ Certificate has been sent to the participant\'s email address!', 'success');
+      } else {
+        showStatus('✗ Failed to send certificate', 'error');
       }
-    };
+    } catch (err) {
+      showStatus('✗ Error sending certificate', 'error');
+      console.error(err);
+    }
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -311,16 +327,7 @@ const Monitoring = () => {
       return dateString;
     }
   };
-  const text = ""
 
-  if (loading) {
-    return (
-      <div className="monitoring-page">
-        <div className="loading-container">Loading participant data...</div>
-      </div>
-    );
-  }
-    // Helper function to get appropriate icon based on document type
   const getDocumentIcon = (docType) => {
     const iconMap = {
       'CV': '📋',
@@ -338,9 +345,27 @@ const Monitoring = () => {
     return iconMap[docType] || '📄';
   };
 
+  // Check if initial load is complete
+  const isInitialLoading = loadingStates.profile;
+
+  if (isInitialLoading) {
+    return (
+      <div className="monitoring-page">
+        <div className="loading-container">Loading participant data...</div>
+      </div>
+    );
+  }
+
+  const allRequirementsMet = areAllRequirementsMet();
+
   return (
     <div className="monitoring-page">
-      {/* Header */}
+      {statusMessage.text && (
+        <div className={`status-notification ${statusMessage.type}`}>
+          {statusMessage.text}
+        </div>
+      )}
+
       <div className="monitoring-header">
         <button onClick={() => navigate('/supervisorDashboard')} className="back-btn">
           ← Back to Dashboard
@@ -352,57 +377,53 @@ const Monitoring = () => {
         </button>
       </div>
 
-      {/* Participant Info Card */} 
       <div className="participant-info-section">
         <div className="info-card main-info">
           <div className="info-avatar"> 
-            {(participant?.full_name || participant?.name || 'P')[0].toUpperCase()}
+            {(profile?.full_name || 'P')[0].toUpperCase()}
           </div>
           <div className="info-details">
-            <h2>{participant?.full_name || participant?.name || 'Participant'}</h2>
-            <p className="info-email">{internData?.profile?.email || 'No email'}</p>
+            <h2>{profile?.full_name || 'Participant'}</h2>
+            <p className="info-email">{profile?.email || 'No email'}</p>
             <div className="info-tags">
               <span className="info-tag">
                 <span className="tag-icon">💼</span>
-                {participant?.training_sector || 'Not specified'}
+                {profile?.training_sector || 'Not specified'}
               </span>
               <span className="info-tag">
                 <span className="tag-icon">📚</span>
-                {internData?.profile?.program?.name || 'Program not specified'}
+                {profile?.program?.name || 'Program not specified'}
               </span>
             </div>
           </div>
-          {participant?.tutor_final_approval && (
+          {profile?.tutor_final_approval && (
             <div className="approval-badge">✅ Approved</div>
           )}
         </div>
 
-        {/* Program Dates Card */}
         <div className="info-card dates-card">
           <h3>📅 Program Timeline</h3>
           <div className="timeline-info">
             <div className="timeline-item">
               <span className="timeline-label">Start Date</span>
-              <span className="timeline-value">{formatDate(internData?.profile?.program?.start_date)}</span>
+              <span className="timeline-value">{formatDate(profile?.program?.start_date)}</span>
             </div>
             <div className="timeline-item">
               <span className="timeline-label">End Date</span>
-              <span className="timeline-value">{formatDate(internData?.profile?.program?.end_date)}</span>
+              <span className="timeline-value">{formatDate(profile?.program?.end_date)}</span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="monitoring-grid">
-        {/* Row 1 - Weekly Evaluation and Previous Evaluations */}
         <div className="monitoring-card evaluation-input-card">
           <div className="card-icon">📝</div>
-          <h3 className="card-title">Submit Weekly Evaluation - Week {recentMonitoring.length + 1}</h3>
+          <h3 className="card-title">Submit Weekly Evaluation - Week {monitoring.length + 1}</h3>
           <textarea
             value={weeklyEvaluation}
             onChange={(e) => setWeeklyEvaluation(e.target.value)}
-
-            placeholder={"Enter your evaluation of the intern's performance for week "+ (recentMonitoring.length + 1)+"..."}
+            placeholder={`Enter your evaluation of the intern's performance for week ${monitoring.length + 1}...`}
             rows="5"
             className="evaluation-textarea"
           />
@@ -418,32 +439,36 @@ const Monitoring = () => {
         <div className="dashboard-card evaluations-card">
           <div className="card-icon">📝</div>
           <h2 className="card-title">Previous Evaluations</h2>
-          <div className="evaluations-content">
-            {recentMonitoring && recentMonitoring.length > 0 ? (
-              <div className="evaluations-list">
-                {recentMonitoring.map((evaluation) => (
-                  <div key={evaluation.id} className="evaluation-item">
-                    <div className="evaluation-week">
-                      Week {evaluation.week_num}
+          {loadingStates.monitoring ? (
+            <div className="card-loading">Loading evaluations...</div>
+          ) : (
+            <div className="evaluations-content">
+              {monitoring && monitoring.length > 0 ? (
+                <div className="evaluations-list">
+                  {monitoring.map((evaluation, index) => (
+                    <div key={evaluation.id || index} className="evaluation-item">
+                      <div className="evaluation-week">
+                        Week {evaluation.week_num || evaluation.weekNum || evaluation.week || (index + 1)}
+                      </div>
+                      <div className="evaluation-text">
+                        {evaluation.tutor_evaluation || evaluation.evaluation || evaluation.comment || 'No evaluation text'}
+                      </div>
                     </div>
-                    <div className="evaluation-text">
-                      {evaluation.tutor_evaluation}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-data">No evaluations yet</p>
-            )}
-          </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-data">No evaluations yet</p>
+              )}
+            </div>
+          )}
         </div>
 
-
-        {/* Row 2 - Task Progress Summary and Documents */}
         <div className="monitoring-card task-summary-card">
           <div className="card-icon">✅</div>
           <h3 className="card-title">Task Progress</h3>
-          {taskStats ? (
+          {loadingStates.progress ? (
+            <div className="card-loading">Loading progress...</div>
+          ) : progress ? (
             <>
               <div className="task-stats-summary">
                 <div className="stats-circle">
@@ -465,7 +490,7 @@ const Monitoring = () => {
                       r="52"
                       cx="60"
                       cy="60"
-                      strokeDasharray={`${326.7 * (taskStats.percentage / 100)} 326.7`}
+                      strokeDasharray={`${326.7 * ((progress.percent || 0) / 100)} 326.7`}
                       transform="rotate(-90 60 60)"
                     />
                     <defs>
@@ -475,25 +500,25 @@ const Monitoring = () => {
                       </linearGradient>
                     </defs>
                   </svg>
-                  <div className="percentage-text">{taskStats.percentage}%</div>
+                  <div className="percentage-text">{progress.percent || 0}%</div>
                 </div>
                 <div className="task-breakdown">
                   <div className="task-stat">
-                    <span className="task-stat-value completed">{taskStats.completed}</span>
+                    <span className="task-stat-value completed">{progress.completed_tasks || 0}</span>
                     <span className="task-stat-label">Completed</span>
                   </div>
                   <div className="task-stat">
-                    <span className="task-stat-value in-progress">{taskStats.inProgress}</span>
+                    <span className="task-stat-value in-progress">{progress.inProgress || 0}</span>
                     <span className="task-stat-label">In Progress</span>
                   </div>
                   <div className="task-stat">
-                    <span className="task-stat-value pending">{taskStats.pending}</span>
+                    <span className="task-stat-value pending">{progress.pending || 0}</span>
                     <span className="task-stat-label">Pending</span>
                   </div>
                 </div>
               </div>
               <p className="task-summary-text">
-                {taskStats.completed} of {taskStats.total} tasks completed
+                {progress.completed_tasks || 0} of {progress.total_tasks || 0} tasks completed
               </p>
               <button onClick={handleViewTasks} className="view-tasks-btn">
                 View Detailed Task List →
@@ -504,15 +529,17 @@ const Monitoring = () => {
           )}
         </div>
 
-         <div className="monitoring-card documents-card">
+        <div className="monitoring-card documents-card">
           <div className="card-icon">📁</div>
           <h3 className="card-title">Uploaded Documents</h3>
-          {documents.length === 0 ? (
+          {loadingStates.documents ? (
+            <div className="card-loading">Loading documents...</div>
+          ) : documents.length === 0 ? (
             <p className="no-data">No documents uploaded yet</p>
           ) : (
             <div className="documents-list">
-              {documents.map((doc) => (
-                <div key={doc.id} className="document-item">
+              {documents.map((doc, index) => (
+                <div key={doc.id || index} className="document-item">
                   <div className="document-info">
                     <span className="document-icon">
                       {getDocumentIcon(doc.doc_type)}
@@ -534,7 +561,6 @@ const Monitoring = () => {
           )}
         </div>
 
-        {/* Row 3 - Program Completion (full width) */}
         <div className="monitoring-card completion-card">
           <div className="card-icon">🎓</div>
           <h3 className="card-title">Program Completion</h3>
@@ -548,17 +574,18 @@ const Monitoring = () => {
               <span>Documents uploaded ({documents.length})</span>
             </label>
             <label className="check-item">
-              <input type="checkbox" disabled checked={recentMonitoring.length > 0} />
-              <span>Evaluations submitted ({recentMonitoring.length})</span>
+              <input type="checkbox" disabled checked={monitoring.length > 0} />
+              <span>Evaluations submitted ({monitoring.length})</span>
             </label>
             <label className="check-item">
-              <input type="checkbox" disabled checked={taskStats?.percentage == 100} />
-              <span>All tasks completed ({taskStats?.percentage || 0}%)</span>
+              <input type="checkbox" disabled checked={progress?.percent === 100} />
+              <span>All tasks completed ({progress?.percent || 0}%)</span>
             </label>
           </div>
           <button 
             onClick={handleMarkComplete}
-            className="complete-btn"
+            className={`complete-btn ${!allRequirementsMet ? 'disabled' : ''}`}
+            disabled={!allRequirementsMet}
           >
             Mark Program as Completed
           </button>

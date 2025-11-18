@@ -7,9 +7,8 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Header */
 .dashboard-header {
-  text-align: center;
+  text-align: center; 
   margin-bottom: 3rem;
   padding: 2rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -49,7 +48,6 @@
   transform: translateY(-2px);
 }
 
-/* Dashboard Grid */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -87,7 +85,6 @@
   font-weight: 600;
 }
 
-/* Program Info Card */
 .program-content h3 {
   color: #667eea;
   margin-bottom: 1rem;
@@ -120,7 +117,6 @@
   color: #333;
 }
 
-/* Progress Card - Updated with Circle Design */
 .progress-content {
   display: flex;
   flex-direction: column;
@@ -233,7 +229,6 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-/* Supervisor Card */
 .supervisor-content {
   display: flex;
   align-items: center;
@@ -275,7 +270,6 @@
   color: #764ba2;
 }
 
-/* Evaluations Card */
 .evaluations-list {
   display: flex;
   flex-direction: column;
@@ -304,7 +298,6 @@
   line-height: 1.4;
 }
 
-/* Upload Card */
 .upload-card {
   grid-column: 1 / -1;
 }
@@ -413,7 +406,6 @@
   padding: 2rem 0;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .intern-dashboard {
     padding: 1rem;
@@ -474,9 +466,7 @@
     font-size: 1.5rem;
   }
 }
-/* ... (keep all existing styles) ... */
 
-/* Updated Document Upload Styles */
 .upload-form {
   display: flex;
   flex-direction: column;
@@ -591,7 +581,6 @@
   color: #721c24;
 }
 
-/* Recent Documents with Badges */
 .recent-documents {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
@@ -632,7 +621,6 @@
   font-size: 0.85rem;
 }
 
-/* Responsive Design for Upload Section */
 @media (max-width: 768px) {
   .upload-inputs {
     flex-direction: column;
@@ -655,9 +643,7 @@
     gap: 0.5rem; 
   } 
 }
-/* Add to existing InternDashboard.css */
 
-/* Not Enrolled State */
 .not-enrolled-card {
   background: white;
   border-radius: 16px;
@@ -711,7 +697,6 @@
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* Completion Celebration Card */
 .completion-celebration-card {
   background: linear-gradient(135deg, #10b98115 0%, #34d39915 100%);
   border: 2px solid #10b981;
@@ -850,7 +835,6 @@
   box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .celebration-stats {
     flex-direction: column;
@@ -875,3 +859,186 @@
     font-size: 1.5rem; 
   }
 }
+.status-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out, slideOut 0.3s ease-out 2.7s forwards;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-notification.success {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-notification.error {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-notification.info {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-notification {
+    left: 20px;
+    right: 20px;
+    top: auto;
+    bottom: 20px;
+    animation: slideUp 0.3s ease-out, slideDown 0.3s ease-out 2.7s forwards;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+  }
+}
+.status-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out, slideOut 0.3s ease-out 2.7s forwards;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-notification.success {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-notification.error {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-notification.info {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-notification {
+    left: 20px;
+    right: 20px;
+    top: auto;
+    bottom: 20px; 
+    animation: slideUp 0.3s ease-out, slideDown 0.3s ease-out 2.7s forwards;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+  }
+}
+.card-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #999;
+  font-style: italic; 
+  font-size: 0.9rem; 
+} 

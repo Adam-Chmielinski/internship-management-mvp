@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
@@ -18,7 +18,6 @@ const Login = () => {
     const result = await login(email, password);
     
     if (result.success) {
-      // Redirect based on role
       switch (result.role?.toLowerCase()) {
         case 'hr':
           navigate('/HrDashboard');
@@ -41,7 +40,6 @@ const Login = () => {
 
   return (
     <div className="login-page">
-      {/* Background decorations */}
       <div className="bg-decoration">
         <div className="bg-circle bg-circle-1"></div>
         <div className="bg-circle bg-circle-2"></div>

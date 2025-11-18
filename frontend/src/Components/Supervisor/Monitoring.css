@@ -7,7 +7,6 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Header */
 .monitoring-header {
   text-align: center;
   margin-bottom: 3rem;
@@ -70,7 +69,6 @@
   transform: translateY(-2px);
 }
 
-/* Participant Info Section */
 .participant-info-section {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -160,7 +158,6 @@
   font-size: 0.9rem;
 }
 
-/* Dates Card */
 .dates-card h3 {
   margin: 0 0 1rem 0;
   color: #333;
@@ -191,7 +188,6 @@
   color: #333;
 }
 
-/* Monitoring Grid */
 .monitoring-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -227,7 +223,6 @@
   font-weight: 600;
 }
 
-/* Evaluation Cards */
 .evaluation-textarea {
   width: 100%;
   padding: 1rem;
@@ -269,7 +264,6 @@
   cursor: not-allowed;
 }
 
-/* Evaluation History */
 .evaluations-list {
   display: flex;
   flex-direction: column;
@@ -309,9 +303,6 @@
   margin: 0;
 }
 
-/* Checklist Card */
-/* Task Summary Card */
-/* Task Summary Card - Updated for responsiveness */
 .task-summary-card {
   display: flex;
   flex-direction: column;
@@ -330,8 +321,8 @@
 
 .stats-circle {
   position: relative;
-  width: min(120px, 30vw);  /* Responsive width */
-  height: min(120px, 30vw); /* Responsive height */
+  width: min(120px, 30vw);
+  height: min(120px, 30vw); 
   flex-shrink: 0;
 }
 
@@ -353,7 +344,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: clamp(1.2rem, 4vw, 1.8rem); /* Responsive font size */
+  font-size: clamp(1.2rem, 4vw, 1.8rem); 
   font-weight: bold;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
@@ -367,7 +358,7 @@
   gap: 0.75rem;
   text-align: left;
   flex: 1;
-  min-width: 0; /* Allow shrinking */
+  min-width: 0; 
 }
 
 .task-stat {
@@ -380,7 +371,6 @@
   min-width: 140px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .task-stats-summary {
     flex-direction: column;
@@ -447,15 +437,13 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
-
-/* Update completion card to full width */
+ 
 .completion-card {
   grid-column: 1 / -1;
   background: linear-gradient(135deg, #fef3c720 0%, #fde68a20 100%);
   border: 2px solid #fbbf24;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .task-stats-summary {
     flex-direction: column;
@@ -472,7 +460,6 @@
   }
 }
 
-/* Documents Card */
 .documents-list {
   display: flex;
   flex-direction: column;
@@ -543,7 +530,6 @@
   box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
 }
 
-/* Completion Card */
 .completion-card {
   background: linear-gradient(135deg, #fef3c720 0%, #fde68a20 100%);
   border: 2px solid #fbbf24;
@@ -597,9 +583,7 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
-/* ... (keep all existing styles) ... */
 
-/* Updated Documents Card Styles */
 .documents-list {
   display: flex;
   flex-direction: column;
@@ -683,7 +667,6 @@
   box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
 }
 
-/* Scrollbar styling for documents list */
 .documents-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -702,7 +685,6 @@
   background: #667eea; 
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .document-item {
     flex-direction: column;
@@ -719,7 +701,6 @@
   }
 }
 
-/* No Data State */
 .no-data {
   text-align: center;
   color: #999;
@@ -727,7 +708,6 @@
   padding: 2rem;
 }
 
-/* Loading State */
 .loading-container {
   display: flex;
   justify-content: center;
@@ -737,7 +717,6 @@
   color: #666;
 }
 
-/* Responsive Design */
 @media (max-width: 1024px) {
   .participant-info-section {
     grid-template-columns: 1fr;
@@ -792,4 +771,139 @@
     position: static;
     margin-top: 1rem;
   }
+}
+.status-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out, slideOut 0.3s ease-out 2.7s forwards;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-notification.success {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-notification.error {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-notification.info {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-notification {
+    left: 20px;
+    right: 20px;
+    top: auto;
+    bottom: 20px;
+    animation: slideUp 0.3s ease-out, slideDown 0.3s ease-out 2.7s forwards;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+  }
+}
+.card-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #999;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.complete-btn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+}
+
+.complete-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.complete-btn.disabled {
+  background: transparent;
+  color: #999;
+  border: 2px solid #e5e7eb;
+  cursor: not-allowed;
+}
+
+.complete-btn.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.check-item input[type="checkbox"]:checked {
+  accent-color: #667eea;
+}
+
+.check-item input[type="checkbox"]:not(:checked) {
+  opacity: 0.6;
 }
