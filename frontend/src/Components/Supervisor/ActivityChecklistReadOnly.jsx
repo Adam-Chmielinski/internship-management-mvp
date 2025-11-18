@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './ActivityChecklistReadOnly.css';
 import API_URL from '../../Config/api';
-import { useParams } from 'react-router-dom';
 
 function ActivityChecklistReadOnly() {
   const { participantId } = useParams();
@@ -10,20 +10,50 @@ function ActivityChecklistReadOnly() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   useEffect(() => {
-    console.log(participantId);
-    fetch(`${API_URL}/supervisor/checklist/${participantId}`)
-      .then(res => res.json())
-      .then(data => {
+    const fetchTasks = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No token found');
+          logout();
+          navigate('/login');
+          return;
+        }
+
+        console.log('Fetching tasks for participant ID:', participantId);
+        
+        const response = await fetch(`${API_URL}/supervisor/checklist/${participantId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.error('Unauthorized - redirecting to login');
+            logout();
+            navigate('/login');
+            return;
+          }
+          throw new Error(`Failed to fetch tasks: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Tasks data received:', data);
         setTasks(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        setLoading(false);
+      } catch (err) {
         console.error('Error fetching tasks:', err);
-      });
-  }, [participantId]);
+        setTasks([]); // Set to empty array on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, [participantId, logout, navigate]);
 
   const handleGoBack = () => {
     navigate(`/monitoring/${participantId}`);
