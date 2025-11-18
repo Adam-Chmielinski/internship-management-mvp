@@ -1,0 +1,17 @@
+{
+  "name": "internship-management-mvp",
+  "version": "0.6.7",
+  "scripts": {
+    "install-all": "npm run install-backend && npm run install-frontend",
+    "install-backend": "cd backend/API && npm install",
+    "install-frontend": "cd frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend/API && node app.js",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend/API && node app.js",
+    "frontend": "cd frontend && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}
