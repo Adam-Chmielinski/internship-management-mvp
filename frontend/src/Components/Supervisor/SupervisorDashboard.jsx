@@ -45,7 +45,6 @@ const SupervisorDashboard = () => {
         const data = await response.json();
         console.log('Supervisor name response data:', data);
         
-        // Handle the array response with an object containing full_name
         if (Array.isArray(data) && data.length > 0 && data[0].full_name) {
           setSupervisorName(data[0].full_name);
         } else if (typeof data === 'string') {
@@ -98,7 +97,6 @@ const SupervisorDashboard = () => {
       }
     };
 
-    // Fetch both in parallel but handle loading state properly
     const fetchAllData = async () => {
       setLoading(true);
       await Promise.all([
