@@ -52,7 +52,7 @@ router.post('/upload/:internId', upload.single('document'), async (req, res) => 
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const relativePath = "docs/" + file.path.split('/')[file.path.split('/').length - 1];
+        const relativePath = "docs/" + path.basename(file.path);
 
         const result = await pool.query(
             `INSERT INTO "Documents" (intern_id, doc_type, file_path, upload_date)

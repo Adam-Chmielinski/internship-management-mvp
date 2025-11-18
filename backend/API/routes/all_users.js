@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const cors = require('cors');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 
 router.get('/interns', async (req, res) => {
