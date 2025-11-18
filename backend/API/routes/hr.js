@@ -3,6 +3,7 @@ const pool = require('../db');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { authenticateToken } = require('../auth');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -32,13 +33,13 @@ router.get('/internships', authenticateToken, async (req, res) => {
         const programsWithInterns = await Promise.all(
             result_general.rows.map(async (element) => {
                 const result_intern = await pool.query(`
-                    SELECT i.full_name,
+                    SELECT i.id, i.full_name,
                     ROUND((COUNT(*) FILTER (WHERE ia.status = 'Completed')::decimal / NULLIF(COUNT(*), 0)) * 100) AS completion_percentage
                     FROM "Interns" i 
                     JOIN "Intern_Activities" ia ON i.id = ia.participant_id
                     JOIN "Internship_Programs" ip ON i.program_id = ip.id
                     WHERE ip.id = $1
-                    GROUP BY i.full_name
+                    GROUP BY i.id
                 `, [element.id]);
                 
                 return {
@@ -64,9 +65,11 @@ router.post('/createIntern', authenticateToken, async(req, res) => {
         );
 
         if(result.rowCount == 0) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+
             await pool.query(`INSERT INTO "Interns" (full_name, email, password, training_sector) 
             VALUES ($1,$2,$3,$4)`,
-            [full_name, email, password, training_sector]);
+            [full_name, email, hashedPassword, training_sector]);
 
             return res.status(201).json({
                 message: 'Created intern'
@@ -84,6 +87,7 @@ router.post('/createIntern', authenticateToken, async(req, res) => {
 
 router.post('/createSupervisor', authenticateToken, async(req, res) => {
     var{full_name, email, password} = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     try{
         const result = await pool.query(`SELECT * FROM "Supervisor" WHERE email LIKE $1`,
@@ -93,7 +97,7 @@ router.post('/createSupervisor', authenticateToken, async(req, res) => {
         if(result.rowCount == 0) {
             await pool.query(`INSERT INTO "Supervisor" (full_name, email, password) 
             VALUES ($1,$2,$3)`,
-            [full_name, email, password]);
+            [full_name, email, hashedPassword]);
 
             return res.status(201).json({
                 message: 'Created superviosr'
@@ -128,7 +132,7 @@ router.post('/createInternship', authenticateToken, async(req, res) => {
 });
 
 router.patch('/assignIntern', authenticateToken, async(req, res) => {
-    const{program_id, intern_id} = req.body
+    const{program_id, intern_id} = req.body;
 
     try {
         const tasks = await pool.query(`
@@ -160,15 +164,14 @@ router.patch('/assignIntern', authenticateToken, async(req, res) => {
 });
 
 router.patch('/unassignIntern', authenticateToken, async(req, res) => {
-    const{program_id, intern_id} = req.body
-
+    const{intern_id} = req.body;
     try {
         await pool.query(`
-            DELETE FROM "Intern_Activities" WHERE intern_id = $1
+            DELETE FROM "Intern_Activities" WHERE participant_id = $1
             `,[intern_id])
 
         await pool.query(`
-            UPDATE "Interns" SET program_id = NULL WHERE id = $2
+            UPDATE "Interns" SET program_id = NULL WHERE id = $1
             `,[intern_id]);
 
         return res.status(201).json({
@@ -176,7 +179,7 @@ router.patch('/unassignIntern', authenticateToken, async(req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({error: 'Intern assignment failed'});
+        res.status(500).json({error: 'Intern disassignment failed'});
     }
 });
 

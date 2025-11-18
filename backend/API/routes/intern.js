@@ -7,7 +7,8 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-router.get('/:internId/overview', authenticateToken, async (req, res) => {
+// GET /intern/:internId/profile
+router.get('/:internId/profile', authenticateToken, async (req, res) => {
     const { internId } = req.params;
 
     if (!Number.isInteger(Number(internId))) {
@@ -40,6 +41,44 @@ router.get('/:internId/overview', authenticateToken, async (req, res) => {
         if (profileQ.rowCount === 0) {
             return res.status(404).json({ error: 'Intern not found' });
         }
+
+        const profile = profileQ.rows[0];
+        const isEnrolled = profile.program_id !== null;
+
+        return res.json({
+            id: profile.intern_id,
+            full_name: profile.full_name,
+            email: profile.intern_email,
+            training_sector: profile.training_sector,
+            tutor_final_approval: profile.tutor_final_approval,
+            is_enrolled: isEnrolled,
+            program: {
+                id: profile.program_id,
+                name: profile.program_name,
+                start_date: profile.start_date,
+                end_date: profile.end_date
+            },
+            supervisor: {
+                id: profile.supervisor_id,
+                name: profile.supervisor_name,
+                email: profile.supervisor_email
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching intern profile:', err);
+        res.status(500).json({ error: 'Failed to load intern profile' });
+    }
+});
+
+// GET /intern/:internId/progress
+router.get('/:internId/progress', authenticateToken, async (req, res) => {
+    const { internId } = req.params;
+
+    if (!Number.isInteger(Number(internId))) {
+        return res.status(400).json({ error: 'Invalid intern ID' });
+    }
+
+    try {
         const progressQ = await pool.query(
             `SELECT
                 COUNT(*)::int AS total_tasks,
@@ -49,6 +88,30 @@ router.get('/:internId/overview', authenticateToken, async (req, res) => {
             [internId]
         );
 
+        const total = progressQ.rows[0]?.total_tasks ?? 0;
+        const completed = progressQ.rows[0]?.completed_tasks ?? 0;
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        return res.json({
+            total_tasks: total,
+            completed_tasks: completed,
+            percent
+        });
+    } catch (err) {
+        console.error('Error fetching intern progress:', err);
+        res.status(500).json({ error: 'Failed to load intern progress' });
+    }
+});
+
+// GET /intern/:internId/monitoring
+router.get('/:internId/monitoring', authenticateToken, async (req, res) => {
+    const { internId } = req.params;
+
+    if (!Number.isInteger(Number(internId))) {
+        return res.status(400).json({ error: 'Invalid intern ID' });
+    }
+
+    try {
         const monitoringQ = await pool.query(
             `SELECT
                 id,
@@ -61,6 +124,22 @@ router.get('/:internId/overview', authenticateToken, async (req, res) => {
             [internId]
         );
 
+        return res.json({ monitoring: monitoringQ.rows });
+    } catch (err) {
+        console.error('Error fetching intern monitoring:', err);
+        res.status(500).json({ error: 'Failed to load intern monitoring' });
+    }
+});
+
+// GET /intern/:internId/documents
+router.get('/:internId/documents', authenticateToken, async (req, res) => {
+    const { internId } = req.params;
+
+    if (!Number.isInteger(Number(internId))) {
+        return res.status(400).json({ error: 'Invalid intern ID' });
+    }
+
+    try {
         const documentsQ = await pool.query(
             `SELECT
                 id,
@@ -73,47 +152,10 @@ router.get('/:internId/overview', authenticateToken, async (req, res) => {
             [internId]
         );
 
-        const isEnrolled = profileQ.rows[0].program_id !== null;
-
-        const [profileRes, progressRes, monitoringRes, documentsRes] =
-            await Promise.all([profileQ, progressQ, monitoringQ, documentsQ]);
-
-        const profile = profileRes.rows[0];
-        const total = progressRes.rows[0]?.total_tasks ?? 0;
-        const completed = progressRes.rows[0]?.completed_tasks ?? 0;
-        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-        return res.json({
-            profile: {
-                id: profile.intern_id,
-                full_name: profile.full_name,
-                email: profile.intern_email,
-                training_sector: profile.training_sector,
-                tutor_final_approval: profile.tutor_final_approval,
-                is_enrolled: isEnrolled,
-                program: {
-                    id: profile.program_id,
-                    name: profile.program_name,
-                    start_date: profile.start_date,
-                    end_date: profile.end_date
-                },
-                supervisor: {
-                    id: profile.supervisor_id,
-                    name: profile.supervisor_name,
-                    email: profile.supervisor_email
-                }
-            },
-            progress: {
-                total_tasks: total,
-                completed_tasks: completed,
-                percent
-            },
-            recentMonitoring: monitoringRes.rows,
-            recentDocuments: documentsRes.rows
-        });
+        return res.json({ documents: documentsQ.rows });
     } catch (err) {
-        console.error('Error fetching intern overview:', err);
-        res.status(500).json({ error: 'Failed to load intern overview' });
+        console.error('Error fetching intern documents:', err);
+        res.status(500).json({ error: 'Failed to load intern documents' });
     }
 });
 

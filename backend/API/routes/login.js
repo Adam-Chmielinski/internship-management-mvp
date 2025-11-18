@@ -1,6 +1,7 @@
 const express = require('express')
 const pool = require('../db')
 const cors = require('cors');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 
@@ -20,8 +21,13 @@ router.post('/', async(req, res) => {
       role = "Intern"
     }
     const user = result.rows[0];
+    if(!user){
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-    if (!user || user.password != password) {
+    // Compare hashed password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if(!passwordMatch){
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
