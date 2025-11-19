@@ -297,9 +297,6 @@ const InternDashboard = () => {
           <p className="not-enrolled-subtext">
             Please contact your administrator or supervisor to get enrolled in an internship program.
           </p>
-          <button onClick={() => navigate('/programs')} className="browse-programs-btn">
-            Browse Available Programs
-          </button>
         </div>
       </div>
     );
@@ -352,7 +349,7 @@ const InternDashboard = () => {
                 className="completion-btn download-cert"
                 disabled={processingAction}
               >
-                📥 Download Certificate
+                Download Certificate
               </button>
             </div>
           </div>
@@ -482,7 +479,7 @@ const InternDashboard = () => {
             <div className="evaluations-content">
               {recentMonitoring && recentMonitoring.length > 0 ? (
                 <div className="evaluations-list">
-                  {recentMonitoring.slice(0, 3).map((evaluation) => (
+                  {recentMonitoring.map((evaluation) => (
                     <div key={evaluation.id} className="evaluation-item">
                       <div className="evaluation-week">
                         Week {evaluation.week_num}
@@ -543,7 +540,7 @@ const InternDashboard = () => {
                 <div className="recent-documents">
                   <h4>Recently Uploaded:</h4>
                   <ul>
-                    {documents.slice(0, 3).map((doc) => (
+                    {documents.map((doc) => (
                       <li key={doc.id}>
                         <span className="doc-type-badge">{doc.doc_type}</span>
                         <span className="doc-date">{formatDate(doc.upload_date)}</span>

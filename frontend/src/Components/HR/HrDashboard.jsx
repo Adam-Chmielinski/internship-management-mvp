@@ -323,7 +323,7 @@ const HrDashboard = () => {
 
   const handleUnassignIntern = async (program_id, intern_id, intern_name) => {
     const confirmed = window.confirm(
-      `Are you sure you want to remove ${intern_name} from this internship program?`
+      `Are you sure you want to remove ${intern_name} from this internship program? This action cannot be undone.`
     );
   
     if (!confirmed) return;
@@ -462,16 +462,30 @@ const HrDashboard = () => {
   const getStats = () => {
     const totalInternships = internships.length;
     const totalInterns = internships.reduce((sum, prog) => sum + (prog.interns?.length || 0), 0);
-    const avgCompletion = internships.reduce((sum, prog) => {
-      const progAvg = prog.interns?.reduce((s, i) => s + parseFloat(i.completion_percentage || 0), 0) / (prog.interns?.length || 1);
-      return sum + (progAvg || 0);
-    }, 0) / (totalInternships || 1);
+  
+    // Only count assigned interns (those with a valid completion percentage)
+    let totalAssignedInterns = 0;
+    let totalCompletionSum = 0;
+  
+    internships.forEach(prog => {
+      prog.interns?.forEach(intern => {
+        // Only count interns who are actually assigned (have a non-null completion percentage)
+        if (intern.completion_percentage !== null && intern.completion_percentage !== undefined) {
+          totalAssignedInterns++;
+          totalCompletionSum += parseFloat(intern.completion_percentage || 0);
+        }
+      });
+    });
+  
+    const avgCompletion = totalAssignedInterns > 0 
+      ? Math.round(totalCompletionSum / totalAssignedInterns)
+      : 0;
 
     return {
       totalInternships,
       totalInterns,
       totalSupervisors: allSupervisors.length,
-      avgCompletion: Math.round(avgCompletion)
+      avgCompletion
     };
   };
 
@@ -526,7 +540,7 @@ const HrDashboard = () => {
           <div className="stat-icon">👥</div>
           <div className="stat-content">
             <span className="stat-value">{stats.totalInterns}</span>
-            <span className="stat-label">Total Interns</span>
+            <span className="stat-label">Assigned Interns</span>
           </div>
         </div>
         <div className="stat-card">

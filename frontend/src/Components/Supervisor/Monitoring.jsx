@@ -243,7 +243,7 @@ const Monitoring = () => {
 
       if (response.ok) {
         showStatus('✓ Program marked as completed successfully!', 'success');
-        handleEmailCertificate();
+        setTimeout(() => handleEmailCertificate(), 3000);
         setTimeout(() => navigate('/supervisorDashboard'), 2000);
       } else {
         throw new Error('Failed to mark complete');
@@ -357,6 +357,7 @@ const Monitoring = () => {
   }
 
   const allRequirementsMet = areAllRequirementsMet();
+  const isProgramCompleted = profile?.tutor_final_approval;
 
   return (
     <div className="monitoring-page">
@@ -396,9 +397,6 @@ const Monitoring = () => {
               </span>
             </div>
           </div>
-          {profile?.tutor_final_approval && (
-            <div className="approval-badge">✅ Approved</div>
-          )}
         </div>
 
         <div className="info-card dates-card">
@@ -417,26 +415,65 @@ const Monitoring = () => {
       </div>
 
       <div className="monitoring-grid">
-        <div className="monitoring-card evaluation-input-card">
-          <div className="card-icon">📝</div>
-          <h3 className="card-title">Submit Weekly Evaluation - Week {monitoring.length + 1}</h3>
-          <textarea
-            value={weeklyEvaluation}
-            onChange={(e) => setWeeklyEvaluation(e.target.value)}
-            placeholder={`Enter your evaluation of the intern's performance for week ${monitoring.length + 1}...`}
-            rows="5"
-            className="evaluation-textarea"
-          />
-          <button 
-            onClick={handleEvaluationSubmit}
-            disabled={submitting}
-            className="submit-btn"
-          >
-            {submitting ? 'Submitting...' : 'Submit Evaluation'}
-          </button>
-        </div>
+        {/* Program Completed Card - Only show when approved */}
+        {isProgramCompleted && (
+          <div className="completion-celebration-card">
+            <div className="celebration-content">
+              <div className="celebration-icon">🎉</div>
+              <p></p>
+              <p className="celebration-text">
+                This intern has successfully completed their internship program and has been marked as complete.
+                All requirements have been fulfilled and the certificate has been issued.
+              </p>
+              <div className="celebration-stats">
+                <div className="celebration-stat">
+                  <span className="stat-number">{progress?.completed_tasks || 0}</span>
+                  <span className="stat-label">Tasks Completed</span>
+                </div>
+                <div className="celebration-stat">
+                  <span className="stat-number">{monitoring?.length || 0}</span>
+                  <span className="stat-label">Weekly Evaluations</span>
+                </div>
+                <div className="celebration-stat">
+                  <span className="stat-number">{documents?.length || 0}</span>
+                  <span className="stat-label">Documents Uploaded</span>
+                </div>
+              </div>
+              <div className="completion-actions">
+                <button 
+                  onClick={handleEmailCertificate} 
+                  className="completion-btn download-cert"
+                >
+                  Resend Certificate via Email
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <div className="dashboard-card evaluations-card">
+        {/* Submit Weekly Evaluation - Hide when approved */}
+        {!isProgramCompleted && (
+          <div className="monitoring-card evaluation-input-card">
+            <div className="card-icon">📝</div>
+            <h3 className="card-title">Submit Weekly Evaluation - Week {monitoring.length + 1}</h3>
+            <textarea
+              value={weeklyEvaluation}
+              onChange={(e) => setWeeklyEvaluation(e.target.value)}
+              placeholder={`Enter your evaluation of the intern's performance for week ${monitoring.length + 1}...`}
+              rows="5"
+              className="evaluation-textarea"
+            />
+            <button 
+              onClick={handleEvaluationSubmit}
+              disabled={submitting}
+              className="submit-btn"
+            >
+              {submitting ? 'Submitting...' : 'Submit Evaluation'}
+            </button>
+          </div>
+        )}
+
+        <div className={`dashboard-card evaluations-card ${isProgramCompleted ? 'expanded-height' : ''}`}>
           <div className="card-icon">📝</div>
           <h2 className="card-title">Previous Evaluations</h2>
           {loadingStates.monitoring ? (
@@ -529,7 +566,7 @@ const Monitoring = () => {
           )}
         </div>
 
-        <div className="monitoring-card documents-card">
+        <div className={`monitoring-card documents-card ${isProgramCompleted ? 'full-width' : ''}`}>
           <div className="card-icon">📁</div>
           <h3 className="card-title">Uploaded Documents</h3>
           {loadingStates.documents ? (
@@ -561,35 +598,38 @@ const Monitoring = () => {
           )}
         </div>
 
-        <div className="monitoring-card completion-card">
-          <div className="card-icon">🎓</div>
-          <h3 className="card-title">Program Completion</h3>
-          <p className="completion-description">
-            Mark this participant's internship program as successfully completed. 
-            This action will update their status and generate a completion certificate.
-          </p>
-          <div className="completion-checklist">
-            <label className="check-item">
-              <input type="checkbox" disabled checked={documents.length > 0} />
-              <span>Documents uploaded ({documents.length})</span>
-            </label>
-            <label className="check-item">
-              <input type="checkbox" disabled checked={monitoring.length > 0} />
-              <span>Evaluations submitted ({monitoring.length})</span>
-            </label>
-            <label className="check-item">
-              <input type="checkbox" disabled checked={progress?.percent === 100} />
-              <span>All tasks completed ({progress?.percent || 0}%)</span>
-            </label>
+        {/* Program Completion Card - Hide when approved */}
+        {!isProgramCompleted && (
+          <div className="monitoring-card completion-card">
+            <div className="card-icon">🎓</div>
+            <h3 className="card-title">Program Completion</h3>
+            <p className="completion-description">
+              Mark this participant's internship program as successfully completed. 
+              This action will update their status and generate a completion certificate.
+            </p>
+            <div className="completion-checklist">
+              <label className="check-item">
+                <input type="checkbox" disabled checked={documents.length > 0} />
+                <span>Documents uploaded ({documents.length})</span>
+              </label>
+              <label className="check-item">
+                <input type="checkbox" disabled checked={monitoring.length > 0} />
+                <span>Evaluations submitted ({monitoring.length})</span>
+              </label>
+              <label className="check-item">
+                <input type="checkbox" disabled checked={progress?.percent === 100} />
+                <span>All tasks completed ({progress?.percent || 0}%)</span>
+              </label>
+            </div>
+            <button 
+              onClick={handleMarkComplete}
+              className={`complete-btn ${!allRequirementsMet ? 'disabled' : ''}`}
+              disabled={!allRequirementsMet}
+            >
+              Mark Program as Completed
+            </button>
           </div>
-          <button 
-            onClick={handleMarkComplete}
-            className={`complete-btn ${!allRequirementsMet ? 'disabled' : ''}`}
-            disabled={!allRequirementsMet}
-          >
-            Mark Program as Completed
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );

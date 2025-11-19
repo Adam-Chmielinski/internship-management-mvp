@@ -4,7 +4,8 @@
   margin: 0 auto;
   background-color: #f7f6f4;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 50;
 }
 
 .dashboard-header {
@@ -396,7 +397,7 @@
 }
 
 .header-top h3 {
-  margin: 0;
+  margin-right: 15px;
   color: #007562;
   font-size: 1.2rem;
   flex: 1;
@@ -435,7 +436,7 @@
 }
 
 .dropdown-content {
-  max-height: 320px;
+  max-height: 200px;
   overflow-y: auto;
   padding: 0.5rem;
   flex: 1;

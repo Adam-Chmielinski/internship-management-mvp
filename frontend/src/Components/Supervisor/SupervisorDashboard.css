@@ -4,7 +4,8 @@
   margin: 0 auto;
   background-color: #f7f6f4;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 50;
 }
 
 .dashboard-header {
@@ -43,7 +44,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 50;
 }
 
 .logout-btn:hover {
