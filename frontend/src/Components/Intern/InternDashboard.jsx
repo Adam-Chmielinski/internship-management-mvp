@@ -5,17 +5,29 @@ import './InternDashboard.css';
 import API_URL from '../../Config/api';
 
 const InternDashboard = () => {
-  const [internData, setInternData] = useState(null);
+  // Separate states for each endpoint
+  const [profile, setProfile] = useState(null);
+  const [progress, setProgress] = useState(null);
+  const [recentMonitoring, setRecentMonitoring] = useState([]);
+  const [documents, setRecentDocuments] = useState([]);
+  
+  // Loading states for each section
+  const [loadingStates, setLoadingStates] = useState({
+    profile: true,
+    progress: true,
+    monitoring: true,
+    documents: true
+  });
+  
   const [uploadFile, setUploadFile] = useState(null);
   const [documentType, setDocumentType] = useState('');
-  const [uploadStatus, setUploadStatus] = useState('');
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [processingAction, setProcessingAction] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ text: '', type: '' });
+  
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Hardcoded document types
   const documentTypes = [
     'CV',
     'Cover Letter',
@@ -29,13 +41,15 @@ const InternDashboard = () => {
     'Other'
   ];
 
-  useEffect(() => {
-    fetchInternData();
-  }, []);
+  const showStatus = (text, type = 'info') => {
+    setStatusMessage({ text, type });
+    setTimeout(() => setStatusMessage({ text: '', type: '' }), 3000);
+  };
 
-  const fetchInternData = async () => {
+  // Fetch profile data
+  const fetchProfileData = async () => {
     try {
-      setLoading(true);
+      setLoadingStates(prev => ({ ...prev, profile: true }));
       const token = localStorage.getItem('token');
       
       if (!token) {
@@ -44,8 +58,7 @@ const InternDashboard = () => {
         return;
       }
 
-      // Fetch intern profile and data
-      const response = await fetch(`${API_URL}/intern/${user.id}/overview`, {
+      const response = await fetch(`${API_URL}/intern/${user.id}/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -58,24 +71,104 @@ const InternDashboard = () => {
           return;
         }
         if (response.status === 404) {
-          // Intern not enrolled in any program
-          setInternData(null);
-          setLoading(false);
+          setProfile(null);
           return;
         }
-        throw new Error('Failed to fetch intern data');
+        throw new Error('Failed to fetch profile data');
       }
 
       const data = await response.json();
-      console.log(data);
-      setInternData(data);
-
+      setProfile(data);
     } catch (err) {
+      console.error('Error fetching profile:', err);
       setError(err.message);
     } finally {
-      setLoading(false);
+      setLoadingStates(prev => ({ ...prev, profile: false }));
     }
   };
+
+  // Fetch progress data
+  const fetchProgressData = async () => {
+    try {
+      setLoadingStates(prev => ({ ...prev, progress: true }));
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_URL}/intern/${user.id}/progress`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProgress(data);
+      }
+    } catch (err) {
+      console.error('Error fetching progress:', err);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, progress: false }));
+    }
+  };
+
+  // Fetch monitoring data
+  const fetchMonitoringData = async () => {
+    try {
+      setLoadingStates(prev => ({ ...prev, monitoring: true }));
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_URL}/intern/${user.id}/monitoring`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Raw monitoring response:', data);
+        const recentMonitoringArray = data.monitoring || data.data || data.recentMonitoring || [];
+        setRecentMonitoring(recentMonitoringArray);
+      }
+    } catch (err) {
+      console.error('Error fetching monitoring:', err);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, monitoring: false }));
+    }
+  };
+
+  // Fetch documents data
+  const fetchDocumentsData = async () => {
+    try {
+      setLoadingStates(prev => ({ ...prev, documents: true }));
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_URL}/intern/${user.id}/documents`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Raw documents response:', data);
+  
+        // Extract the array from the response
+        const documentsArray = data.documents || data.data || data.recentDocuments || [];
+        setRecentDocuments(documentsArray);
+      }
+    } catch (err) {
+      console.error('Error fetching documents:', err);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, documents: false }));
+    }
+  };
+
+  // Fetch all data on mount
+  useEffect(() => {
+    fetchProfileData();
+    fetchProgressData();
+    fetchMonitoringData();
+    fetchDocumentsData();
+  }, []);
 
   const handleDownloadCertificate = async () => {
     try {
@@ -97,55 +190,12 @@ const InternDashboard = () => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        showStatus('✓ Certificate downloaded successfully!', 'success');
       } else {
-        alert('Failed to download certificate');
+        showStatus('✗ Failed to download certificate', 'error');
       }
     } catch (err) {
-      alert('Error downloading certificate');
-      console.error(err);
-    } finally {
-      setProcessingAction(false);
-    }
-  };
-  
-  const handleUnenroll = async () => {
-    const confirmed = window.confirm(
-      'Are you sure you want to unenroll from this internship?\n\n' +
-      '⚠️ WARNING: This action will permanently delete all your data associated with this internship, including:\n' +
-      '• Task progress\n' +
-      '• Evaluations\n' +
-      '• Uploaded documents\n' +
-      '• Completion status\n\n' +
-      'This action cannot be undone!'
-    );
-
-    if (!confirmed) return;
-
-    const doubleConfirm = window.confirm(
-      'This is your final confirmation.\n\n' +
-      'Type "DELETE" to confirm that you want to permanently delete all your internship data.'
-    );
-
-    if (!doubleConfirm) return;
-
-    try {
-      setProcessingAction(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/intern/unenroll`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        alert('You have been successfully unenrolled from the internship.');
-        fetchInternData(); // Refresh to show not-enrolled state
-      } else {
-        alert('Failed to unenroll from internship');
-      }
-    } catch (err) {
-      alert('Error processing unenrollment');
+      showStatus('✗ Error downloading certificate', 'error');
       console.error(err);
     } finally {
       setProcessingAction(false);
@@ -156,12 +206,12 @@ const InternDashboard = () => {
     e.preventDefault();
     
     if (!uploadFile) {
-      setUploadStatus('Please select a file to upload');
+      showStatus('Please select a file to upload', 'error');
       return;
     }
 
     if (!documentType) {
-      setUploadStatus('Please select a document type');
+      showStatus('Please select a document type', 'error');
       return;
     }
 
@@ -170,7 +220,7 @@ const InternDashboard = () => {
     formData.append('document', uploadFile);
 
     try {
-      setUploadStatus('Uploading...');
+      showStatus('Uploading...', 'info');
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/documents/upload/${user.id}`, {
         method: 'POST',
@@ -184,15 +234,15 @@ const InternDashboard = () => {
         throw new Error('Upload failed');
       }
 
-      setUploadStatus('✓ Document uploaded successfully!');
+      showStatus('✓ Document uploaded successfully!', 'success');
       setUploadFile(null);
       setDocumentType('');
       document.getElementById('file-upload').value = '';
-      setTimeout(() => setUploadStatus(''), 3000);
-      fetchInternData();
+      
+      // Only refresh documents data, not the entire dashboard
+      await fetchDocumentsData();
     } catch (err) {
-      setUploadStatus('✗ Failed to upload document');
-      setTimeout(() => setUploadStatus(''), 3000);
+      showStatus('✗ Failed to upload document', 'error');
     }
   };
 
@@ -218,16 +268,23 @@ const InternDashboard = () => {
     navigate('/tasks');
   };
 
-  if (loading) return <div className="intern-dashboard">Loading dashboard...</div>;
-  if (error) return <div className="intern-dashboard">Error: {error}</div>;
+  // Check if initial load is complete
+  const isInitialLoading = loadingStates.profile;
+  
+  if (isInitialLoading) {
+    return <div className="intern-dashboard">Loading dashboard...</div>;
+  }
+  
+  if (error) {
+    return <div className="intern-dashboard">Error: {error}</div>;
+  }
 
-  // Check if intern is not enrolled in any program
-  if (!internData.profile.is_enrolled) {
+  if (!profile || !profile.is_enrolled) {
     return (
       <div className="intern-dashboard">
         <div className="dashboard-header">
           <h1>Intern Dashboard</h1>
-          <p>Welcome, {internData.profile?.full_name || 'Intern'}</p>
+          <p>Welcome, {profile?.full_name || 'Intern'}</p>
           <button onClick={handleLogout} className="logout-btn">
             Log Out
           </button>
@@ -240,19 +297,21 @@ const InternDashboard = () => {
           <p className="not-enrolled-subtext">
             Please contact your administrator or supervisor to get enrolled in an internship program.
           </p>
-          <button onClick={() => navigate('/programs')} className="browse-programs-btn">
-            Browse Available Programs
-          </button>
         </div>
       </div>
     );
   }
 
-  const { profile, progress, recentMonitoring, recentDocuments } = internData;
   const isCompleted = profile?.tutor_final_approval === true;
 
   return (
     <div className="intern-dashboard">
+      {statusMessage.text && (
+        <div className={`status-notification ${statusMessage.type}`}>
+          {statusMessage.text}
+        </div>
+      )}
+
       <div className="dashboard-header">
         <h1>Intern Dashboard</h1>
         <p>Welcome, {profile?.full_name || 'Intern'}</p>
@@ -261,7 +320,6 @@ const InternDashboard = () => {
         </button>
       </div>
 
-      {/* Completion Card - Shows only when internship is completed */}
       {isCompleted && (
         <div className="completion-celebration-card">
           <div className="celebration-content">
@@ -281,7 +339,7 @@ const InternDashboard = () => {
                 <span className="stat-label">Weekly Evaluations</span>
               </div>
               <div className="celebration-stat">
-                <span className="stat-number">{recentDocuments?.length || 0}</span>
+                <span className="stat-number">{documents?.length || 0}</span>
                 <span className="stat-label">Documents Uploaded</span>
               </div>
             </div>
@@ -291,14 +349,7 @@ const InternDashboard = () => {
                 className="completion-btn download-cert"
                 disabled={processingAction}
               >
-                📥 Download Certificate
-              </button>
-              <button 
-                onClick={handleUnenroll} 
-                className="completion-btn unenroll"
-                disabled={processingAction}
-              >
-                🚪 Unenroll from Program
+                Download Certificate
               </button>
             </div>
           </div>
@@ -306,134 +357,146 @@ const InternDashboard = () => {
       )}
 
       <div className="dashboard-grid">
-        {/* Rest of your existing dashboard cards */}
-        {/* Row 1 - Program Info and Progress */}
         <div className="dashboard-card program-info-card">
           <div className="card-icon">📚</div>
           <h2 className="card-title">Internship Program</h2>
-          <div className="program-content">
-            <h3>{profile?.program?.name || 'Internship Program'}</h3>
-            <p className="training-sector">Training Sector: <strong>{profile?.training_sector || 'N/A'}</strong></p>
-            <div className="program-dates">
-              <div className="date-item">
-                <span className="date-label">Start Date</span>
-                <span className="date-value">{formatDate(profile?.program?.start_date)}</span>
-              </div>
-              <div className="date-item">
-                <span className="date-label">End Date</span>
-                <span className="date-value">{formatDate(profile?.program?.end_date)}</span>
+          {loadingStates.profile ? (
+            <div className="card-loading">Loading...</div>
+          ) : (
+            <div className="program-content">
+              <h3>{profile?.program?.name || 'Internship Program'}</h3>
+              <p className="training-sector">Training Sector: <strong>{profile?.training_sector || 'N/A'}</strong></p>
+              <div className="program-dates">
+                <div className="date-item">
+                  <span className="date-label">Start Date</span>
+                  <span className="date-value">{formatDate(profile?.program?.start_date)}</span>
+                </div>
+                <div className="date-item">
+                  <span className="date-label">End Date</span>
+                  <span className="date-value">{formatDate(profile?.program?.end_date)}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="dashboard-card progress-card">
           <div className="card-icon">📊</div>
           <h2 className="card-title">Task Progress</h2>
-          <div className="progress-content">
-            <div className="task-progress-summary">
-              <div className="progress-circle-container">
-                <svg className="progress-ring" viewBox="0 0 120 120">
-                  <circle
-                    className="progress-ring-bg"
-                    strokeWidth="8"
-                    stroke="#e5e7eb"
-                    fill="transparent"
-                    r="52"
-                    cx="60"
-                    cy="60"
-                  />
-                  <circle
-                    className="progress-ring-fill"
-                    strokeWidth="8"
-                    stroke="url(#gradient)"
-                    fill="transparent"
-                    r="52"
-                    cx="60"
-                    cy="60"
-                    strokeDasharray={`${326.7 * ((progress?.percent || 0) / 100)} 326.7`}
-                    transform="rotate(-90 60 60)"
-                  />
-                  <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#667eea" />
-                      <stop offset="100%" stopColor="#764ba2" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="percentage-display">{progress?.percent || 0}%</div>
+          {loadingStates.progress ? (
+            <div className="card-loading">Loading progress...</div>
+          ) : (
+            <div className="progress-content">
+              <div className="task-progress-summary">
+                <div className="progress-circle-container">
+                  <svg className="progress-ring" viewBox="0 0 120 120">
+                    <circle
+                      className="progress-ring-bg"
+                      strokeWidth="8"
+                      stroke="#e5e7eb"
+                      fill="transparent"
+                      r="52"
+                      cx="60"
+                      cy="60"
+                    />
+                    <circle
+                      className="progress-ring-fill"
+                      strokeWidth="8"
+                      stroke="url(#gradient)"
+                      fill="transparent"
+                      r="52"
+                      cx="60"
+                      cy="60"
+                      strokeDasharray={`${326.7 * ((progress?.percent || 0) / 100)} 326.7`}
+                      transform="rotate(-90 60 60)"
+                    />
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#667eea" />
+                        <stop offset="100%" stopColor="#764ba2" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="percentage-display">{progress?.percent || 0}%</div>
+                </div>
+                <div className="task-stats-breakdown">
+                  <div className="stat-row">
+                    <span className="stat-value completed">{progress?.completed_tasks || 0}</span>
+                    <span className="stat-label">Completed</span>
+                  </div>
+                  <div className="stat-row">
+                    <span className="stat-value pending">{(progress?.total_tasks || 0) - (progress?.completed_tasks || 0)}</span>
+                    <span className="stat-label">Remaining</span>
+                  </div>
+                  <div className="stat-row">
+                    <span className="stat-value total">{progress?.total_tasks || 0}</span>
+                    <span className="stat-label">Total Tasks</span>
+                  </div>
+                </div>
               </div>
-              <div className="task-stats-breakdown">
-                <div className="stat-row">
-                  <span className="stat-value completed">{progress?.completed_tasks || 0}</span>
-                  <span className="stat-label">Completed</span>
-                </div>
-                <div className="stat-row">
-                  <span className="stat-value pending">{(progress?.total_tasks || 0) - (progress?.completed_tasks || 0)}</span>
-                  <span className="stat-label">Remaining</span>
-                </div>
-                <div className="stat-row">
-                  <span className="stat-value total">{progress?.total_tasks || 0}</span>
-                  <span className="stat-label">Total Tasks</span>
-                </div>
-              </div>
+              <p className="progress-summary-text">
+                {progress?.completed_tasks || 0} of {progress?.total_tasks || 0} tasks completed
+              </p>
+              <button onClick={navigateToTasks} className="view-tasks-btn">
+                View All Tasks →
+              </button>
             </div>
-            <p className="progress-summary-text">
-              {progress?.completed_tasks || 0} of {progress?.total_tasks || 0} tasks completed
-            </p>
-            <button onClick={navigateToTasks} className="view-tasks-btn">
-              View All Tasks →
-            </button>
-          </div>
+          )}
         </div>
 
-        {/* Row 2 - Supervisor Contact and Recent Evaluations */}
         <div className="dashboard-card supervisor-card">
           <div className="card-icon">👤</div>
           <h2 className="card-title">Supervisor Contact</h2>
-          <div className="supervisor-content">
-            {profile?.supervisor ? (
-              <>
-                <div className="supervisor-avatar">
-                  {(profile.supervisor.name || 'S')[0].toUpperCase()}
-                </div>
-                <div className="supervisor-details">
-                  <h3>{profile.supervisor.name}</h3>
-                  <a href={`mailto:${profile.supervisor.email}`} className="email-link">
-                    ✉️ {profile.supervisor.email}
-                  </a>
-                </div>
-              </>
-            ) : (
-              <p className="no-data">No supervisor assigned</p>
-            )}
-          </div>
+          {loadingStates.profile ? (
+            <div className="card-loading">Loading...</div>
+          ) : (
+            <div className="supervisor-content">
+              {profile?.supervisor ? (
+                <>
+                  <div className="supervisor-avatar">
+                    {(profile.supervisor.name || 'S')[0].toUpperCase()}
+                  </div>
+                  <div className="supervisor-details">
+                    <h3>{profile.supervisor.name}</h3>
+                    <a href={`mailto:${profile.supervisor.email}`} className="email-link">
+                      ✉️ {profile.supervisor.email}
+                    </a>
+                  </div>
+                </>
+              ) : (
+                <p className="no-data">No supervisor assigned</p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="dashboard-card evaluations-card">
           <div className="card-icon">📝</div>
           <h2 className="card-title">Recent Evaluations</h2>
-          <div className="evaluations-content">
-            {recentMonitoring && recentMonitoring.length > 0 ? (
-              <div className="evaluations-list">
-                {recentMonitoring.slice(0, 3).map((evaluation) => (
-                  <div key={evaluation.id} className="evaluation-item">
-                    <div className="evaluation-week">
-                      Week {evaluation.week_num}
+          {loadingStates.monitoring ? (
+            <div className="card-loading">Loading evaluations...</div>
+          ) : (
+            <div className="evaluations-content">
+              {recentMonitoring && recentMonitoring.length > 0 ? (
+                <div className="evaluations-list">
+                  {recentMonitoring.map((evaluation) => (
+                    <div key={evaluation.id} className="evaluation-item">
+                      <div className="evaluation-week">
+                        Week {evaluation.week_num}
+                      </div>
+                      <div className="evaluation-text">
+                        {evaluation.tutor_evaluation}
+                      </div>
                     </div>
-                    <div className="evaluation-text">
-                      {evaluation.tutor_evaluation}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-data">No evaluations yet</p>
-            )}
-          </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-data">No evaluations yet</p>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Row 3 - Document Upload (full width) - Hide if completed */}
         {!isCompleted && (
           <div className="dashboard-card upload-card">
             <div className="card-icon">📄</div>
@@ -469,24 +532,23 @@ const InternDashboard = () => {
                   📤 Upload
                 </button>
               </div>
-              {uploadStatus && (
-                <div className={`upload-status ${uploadStatus.includes('✓') ? 'success' : uploadStatus.includes('✗') ? 'error' : ''}`}>
-                  {uploadStatus}
-                </div>
-              )}
             </form>
-            {recentDocuments && recentDocuments.length > 0 && (
-              <div className="recent-documents">
-                <h4>Recently Uploaded:</h4>
-                <ul>
-                  {recentDocuments.slice(0, 3).map((doc) => (
-                    <li key={doc.id}>
-                      <span className="doc-type-badge">{doc.doc_type}</span>
-                      <span className="doc-date">{formatDate(doc.upload_date)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {loadingStates.documents ? (
+              <div className="card-loading">Loading documents...</div>
+            ) : (
+              documents && documents.length > 0 && (
+                <div className="recent-documents">
+                  <h4>Recently Uploaded:</h4>
+                  <ul>
+                    {documents.map((doc) => (
+                      <li key={doc.id}>
+                        <span className="doc-type-badge">{doc.doc_type}</span>
+                        <span className="doc-date">{formatDate(doc.upload_date)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
             )}
           </div>
         )}

@@ -1,4 +1,3 @@
-// src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import API_URL from '../Config/api';
 
@@ -36,11 +35,9 @@ export const AuthProvider = ({ children }) => {
         }),
       });
 
-      // Parse the response
       const data = await response.json();
       console.log("Full API Response:", data);
 
-      // Check if the request was successful
       if (!response.ok) {
         console.error("Error response:", data);
         const errorMessage = data.message || 'Incorrect email or password';
@@ -50,16 +47,13 @@ export const AuthProvider = ({ children }) => {
         };
       }
 
-      // Destructure based on your actual API response
       const { token, id, role: userRole } = data;
 
       if (token && userRole && id) {
-        // Store in localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('role', userRole);
         localStorage.setItem('userId', id);
         
-        // Update state
         setUser({ id });
         setRole(userRole);
         
@@ -70,7 +64,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Login failed:", error);
       
-      // Handle network errors or JSON parsing errors
       return {
         success: false,
         message: 'Network error or server is unavailable. Please try again.',

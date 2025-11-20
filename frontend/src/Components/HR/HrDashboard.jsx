@@ -8,7 +8,6 @@ const HrDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // State for forms
   const [internForm, setInternForm] = useState({
     full_name: '',
     email: '',
@@ -29,7 +28,6 @@ const HrDashboard = () => {
     supervisor_id: ''
   });
 
-  // State for data
   const [internships, setInternships] = useState([]);
   const [allInterns, setAllInterns] = useState([]);
   const [allSupervisors, setAllSupervisors] = useState([]);
@@ -39,15 +37,99 @@ const HrDashboard = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [fullName, setFullName] = useState('');
   
-  // New state for tracking pending assignments
   const [pendingAssignments, setPendingAssignments] = useState({});
   const [assigningInterns, setAssigningInterns] = useState(false);
 
-  // Hard-coded training sectors
+  const [statusMessage, setStatusMessage] = useState({ text: '', type: '' });
+
+  const showStatus = (text, type = 'info') => {
+    setStatusMessage({ text, type });
+    setTimeout(() => setStatusMessage({ text: '', type: '' }), 3000);
+  };
+
   const trainingSectors = [
     'IT',
     'Mechatronics'
   ];
+
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getTomorrowDate = (startDate) => {
+    if (!startDate) return getTodayDate();
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + 1);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Separate fetch functions for partial refresh
+  const fetchInternships = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/hr/internships`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setInternships(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error fetching internships:', error);
+      return false;
+    }
+  };
+
+  const fetchUnassignedInterns = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/getAll/unassignedInterns`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAllInterns(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error fetching unassigned interns:', error);
+      return false;
+    }
+  };
+
+  const fetchSupervisors = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/getAll/supervisors`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAllSupervisors(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error fetching supervisors:', error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -58,67 +140,32 @@ const HrDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       
-      // Fetch internships
-      const internshipsResponse = await fetch(`${API_URL}/hr/internships`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (internshipsResponse.ok) {
-        const data = await internshipsResponse.json();
-        setInternships(data);
-      }
+      // Fetch all data in parallel
+      const [internshipsResult, fullNameResult, internsResult, supervisorsResult] = await Promise.all([
+        fetchInternships(),
+        fetch(`${API_URL}/hr/fullName`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+        fetchUnassignedInterns(),
+        fetchSupervisors()
+      ]);
       
-      // Fetch HR full name
-      const fullNameResponse = await fetch(`${API_URL}/hr/fullName`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (fullNameResponse.ok) {
-        const data = await fullNameResponse.json();
-        console.log('HR fullName response data:', data);
-        
-        // Handle the array response with an object containing full_name
-        if (Array.isArray(data) && data.length > 0 && data[0].full_name) {
-          setFullName(data[0].full_name);
-        } else if (typeof data === 'string') {
-          setFullName(data);
-        } else if (data.name) {
-          setFullName(data.name);
-        } else if (data.fullName) {
-          setFullName(data.fullName);
-        } else if (data.full_name) {
-          setFullName(data.full_name);
-        } else {
-          console.log('Unexpected HR name data structure:', data);
-        }
+      // Handle fullName response
+      if (fullNameResult.ok) {
+        const data = await fullNameResult.json();
+        const name = Array.isArray(data) && data.length > 0 
+          ? data[0].full_name 
+          : data?.full_name || data?.fullName || data?.name || data;
+        if (name) setFullName(name);
       }
 
-      // Fetch all interns for dropdown
-      const internsResponse = await fetch(`${API_URL}/getAll/unassignedInterns`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (internsResponse.ok) {
-        const data = await internsResponse.json();
-        setAllInterns(data);
-      }
-
-      // Fetch all supervisors for dropdown
-      const supervisorsResponse = await fetch(`${API_URL}/getAll/supervisors`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (supervisorsResponse.ok) {
-        const data = await supervisorsResponse.json();
-        setAllSupervisors(data);
-      }
+      showStatus('✓ Dashboard data loaded successfully', 'success');
 
     } catch (error) {
       console.error('Error fetching data:', error);
+      showStatus('✗ Error loading dashboard data', 'error');
     } finally {
       setLoading(false);
     }
@@ -139,14 +186,15 @@ const HrDashboard = () => {
       });
 
       if (response.ok) {
-        alert('Intern created successfully!');
+        showStatus('✓ Intern created successfully!', 'success');
         setInternForm({ full_name: '', email: '', password: '', training_sector: '' });
-        fetchDashboardData(); // Refresh data
+        // Only refresh unassigned interns list
+        await fetchUnassignedInterns();
       } else {
         throw new Error('Failed to create intern');
       }
     } catch (error) {
-      alert('Error creating intern: ' + error.message);
+      showStatus(`✗ Error creating intern: ${error.message}`, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -167,14 +215,15 @@ const HrDashboard = () => {
       });
 
       if (response.ok) {
-        alert('Supervisor created successfully!');
+        showStatus('✓ Supervisor created successfully!', 'success');
         setSupervisorForm({ full_name: '', email: '', password: '' });
-        fetchDashboardData(); // Refresh data
+        // Only refresh supervisors list
+        await fetchSupervisors();
       } else {
         throw new Error('Failed to create supervisor');
       }
     } catch (error) {
-      alert('Error creating supervisor: ' + error.message);
+      showStatus(`✗ Error creating supervisor: ${error.message}`, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -182,6 +231,22 @@ const HrDashboard = () => {
 
   const handleCreateInternship = async (e) => {
     e.preventDefault();
+    
+    const startDate = new Date(internshipForm.start_date);
+    const endDate = new Date(internshipForm.end_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (startDate < today) {
+      showStatus('Start date cannot be in the past', 'error');
+      return;
+    }
+    
+    if (endDate <= startDate) {
+      showStatus('End date must be after the start date', 'error');
+      return;
+    }
+    
     setSubmitting(true);
     try {
       const token = localStorage.getItem('token');
@@ -195,32 +260,43 @@ const HrDashboard = () => {
       });
 
       if (response.ok) {
-        alert('Internship created successfully!');
+        showStatus('✓ Internship created successfully!', 'success');
         setInternshipForm({
           program_name: '',
           start_date: '',
           end_date: '',
           supervisor_id: ''
         });
-        fetchDashboardData(); // Refresh data
+        // Only refresh internships list
+        await fetchInternships();
       } else {
         throw new Error('Failed to create internship');
       }
     } catch (error) {
-      alert('Error creating internship: ' + error.message);
+      showStatus(`✗ Error creating internship: ${error.message}`, 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Initialize pending assignments when dropdown opens
+  const handleStartDateChange = (e) => {
+    const newStartDate = e.target.value;
+    setInternshipForm(prev => {
+      const updatedForm = { ...prev, start_date: newStartDate };
+      
+      if (prev.end_date && new Date(prev.end_date) <= new Date(newStartDate)) {
+        updatedForm.end_date = '';
+      }
+      
+      return updatedForm;
+    });
+  };
+
   const toggleDropdown = (program_id) => {
     if (openDropdown !== program_id) {
-      // Opening a new dropdown - initialize pending assignments for this internship
       const internship = internships.find(i => i.id === program_id);
       const currentAssignments = {};
       
-      // Mark currently assigned interns
       internship?.interns?.forEach(intern => {
         const matchingIntern = allInterns.find(ai => 
           ai.id === intern.id || ai.full_name === intern.full_name
@@ -233,13 +309,11 @@ const HrDashboard = () => {
       setPendingAssignments(currentAssignments);
       setOpenDropdown(program_id);
     } else {
-      // Closing dropdown
       setOpenDropdown(null);
       setPendingAssignments({});
     }
   };
 
-  // Handle checkbox change (local state only)
   const handleCheckboxChange = (intern_id, isChecked) => {
     setPendingAssignments(prev => ({
       ...prev,
@@ -247,7 +321,53 @@ const HrDashboard = () => {
     }));
   };
 
-  // Submit all assignment changes
+  const handleUnassignIntern = async (program_id, intern_id, intern_name) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to remove ${intern_name} from this internship program? This action cannot be undone.`
+    );
+  
+    if (!confirmed) return;
+  
+    try {
+      setAssigningInterns(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/hr/unassignIntern`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ intern_id }),
+      });
+
+      if (response.ok) {
+        showStatus(`✓ ${intern_name} removed from internship`, 'success');
+        // Only refresh internships and unassigned interns list
+        await Promise.all([
+          fetchInternships(),
+          fetchUnassignedInterns()
+        ]);
+      } else {
+        throw new Error('Failed to unassign intern');
+      }
+    } catch (error) {
+      showStatus(`✗ Error removing intern: ${error.message}`, 'error');
+    } finally {
+      setAssigningInterns(false);
+    }
+  };
+
+  const getInternId = (intern) => {
+    // If the intern already has an ID, use it
+    if (intern.id) return intern.id;
+  
+    // Otherwise, find the intern in allInterns by name
+    const matchingIntern = allInterns.find(ai => 
+      ai.full_name === intern.full_name
+    );
+    return matchingIntern?.id || intern.intern_id || null;
+  };
+
   const handleSubmitAssignments = async (program_id) => {
     setAssigningInterns(true);
     
@@ -255,7 +375,6 @@ const HrDashboard = () => {
       const token = localStorage.getItem('token');
       const internship = internships.find(i => i.id === program_id);
       
-      // Get currently assigned intern IDs
       const currentlyAssigned = new Set();
       internship?.interns?.forEach(intern => {
         const matchingIntern = allInterns.find(ai => 
@@ -266,7 +385,6 @@ const HrDashboard = () => {
         }
       });
       
-      // Determine which interns to assign and unassign
       const toAssign = [];
       const toUnassign = [];
       
@@ -281,9 +399,7 @@ const HrDashboard = () => {
         }
       });
       
-      // Execute all assignments
       const assignPromises = toAssign.map(intern_id => 
-        console.log('Assigning intern', intern_id, 'to internship', program_id) ||
         fetch(`${API_URL}/hr/assignIntern`, {
           method: 'PATCH',
           headers: {
@@ -294,7 +410,6 @@ const HrDashboard = () => {
         })
       );
       
-      // Execute all unassignments
       const unassignPromises = toUnassign.map(intern_id => 
         fetch(`${API_URL}/hr/unassignIntern`, {
           method: 'PATCH',
@@ -306,29 +421,28 @@ const HrDashboard = () => {
         })
       );
       
-      // Wait for all operations to complete
       await Promise.all([...assignPromises, ...unassignPromises]);
       
-      alert(`Successfully updated intern assignments!`);
+      showStatus('✓ Successfully updated intern assignments!', 'success');
       setOpenDropdown(null);
       setPendingAssignments({});
-      fetchDashboardData(); // Refresh data
+      
+      // Only refresh internships and unassigned interns list
+      await Promise.all([
+        fetchInternships(),
+        fetchUnassignedInterns()
+      ]);
       
     } catch (error) {
-      alert('Error updating intern assignments: ' + error.message);
+      showStatus(`✗ Error updating intern assignments: ${error.message}`, 'error');
     } finally {
       setAssigningInterns(false);
     }
   };
 
-  // Cancel assignments and close dropdown
   const handleCancelAssignments = () => {
     setOpenDropdown(null);
     setPendingAssignments({});
-  };
-
-  const getInternById = (intern_id) => {
-    return allInterns.find(intern => intern.id === intern_id);
   };
 
   const handleLogout = () => {
@@ -348,20 +462,33 @@ const HrDashboard = () => {
   const getStats = () => {
     const totalInternships = internships.length;
     const totalInterns = internships.reduce((sum, prog) => sum + (prog.interns?.length || 0), 0);
-    const avgCompletion = internships.reduce((sum, prog) => {
-      const progAvg = prog.interns?.reduce((s, i) => s + parseFloat(i.completion_percentage || 0), 0) / (prog.interns?.length || 1);
-      return sum + (progAvg || 0);
-    }, 0) / (totalInternships || 1);
+  
+    // Only count assigned interns (those with a valid completion percentage)
+    let totalAssignedInterns = 0;
+    let totalCompletionSum = 0;
+  
+    internships.forEach(prog => {
+      prog.interns?.forEach(intern => {
+        // Only count interns who are actually assigned (have a non-null completion percentage)
+        if (intern.completion_percentage !== null && intern.completion_percentage !== undefined) {
+          totalAssignedInterns++;
+          totalCompletionSum += parseFloat(intern.completion_percentage || 0);
+        }
+      });
+    });
+  
+    const avgCompletion = totalAssignedInterns > 0 
+      ? Math.round(totalCompletionSum / totalAssignedInterns)
+      : 0;
 
     return {
       totalInternships,
       totalInterns,
       totalSupervisors: allSupervisors.length,
-      avgCompletion: Math.round(avgCompletion)
+      avgCompletion
     };
   };
 
-  // Modified click outside handler to prevent closing on button clicks
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.assign-dropdown-container')) {
@@ -387,7 +514,12 @@ const HrDashboard = () => {
 
   return (
     <div className="hr-dashboard">
-      {/* Header */}
+      {statusMessage.text && (
+        <div className={`status-notification ${statusMessage.type}`}>
+          {statusMessage.text}
+        </div>
+      )}
+
       <div className="dashboard-header">
         <h1>HR Dashboard</h1>
         <p>Welcome, {fullName || user?.fullName || 'HR Manager'}</p>
@@ -396,8 +528,6 @@ const HrDashboard = () => {
         </button>
       </div>
 
-      {/* Rest of the component remains the same... */}
-      {/* Stats Overview */}
       <div className="stats-overview">
         <div className="stat-card">
           <div className="stat-icon">🎓</div>
@@ -410,7 +540,7 @@ const HrDashboard = () => {
           <div className="stat-icon">👥</div>
           <div className="stat-content">
             <span className="stat-value">{stats.totalInterns}</span>
-            <span className="stat-label">Total Interns</span>
+            <span className="stat-label">Assigned Interns</span>
           </div>
         </div>
         <div className="stat-card">
@@ -429,7 +559,6 @@ const HrDashboard = () => {
         </div>
       </div>
 
-      {/* Tab Navigation */}
       <div className="tab-navigation">
         <button
           className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
@@ -457,9 +586,7 @@ const HrDashboard = () => {
         </button>
       </div>
 
-      {/* Tab Content */}
       <div className="tab-content">
-        {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="internships-overview">
             <h2 className="section-title">Internship Programs</h2>
@@ -540,42 +667,56 @@ const HrDashboard = () => {
                       <h4>Assigned Interns ({internship.interns?.length || 0})</h4>
                       {internship.interns && internship.interns.length > 0 ? (
                         <div className="interns-list">
-                          {internship.interns.map((intern, idx) => (
-                            <div key={idx} className="intern-item">
-                              <span className="intern-name">{intern.full_name}</span>
-                              <div className="completion-badge">
-                                <div className="mini-progress-ring">
-                                  <svg width="30" height="30">
-                                    <circle
-                                      cx="15"
-                                      cy="15"
-                                      r="12"
-                                      stroke="#e5e7eb"
-                                      strokeWidth="2"
-                                      fill="none"
-                                    />
-                                    <circle
-                                      cx="15"
-                                      cy="15"
-                                      r="12"
-                                      stroke="url(#mini-gradient)"
-                                      strokeWidth="2"
-                                      fill="none"
-                                      strokeDasharray={`${75.4 * (parseFloat(intern.completion_percentage) / 100)} 75.4`}
-                                      transform="rotate(-90 15 15)"
-                                    />
-                                    <defs>
-                                      <linearGradient id="mini-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#667eea" />
-                                        <stop offset="100%" stopColor="#764ba2" />
-                                      </linearGradient>
-                                    </defs>
-                                  </svg>
-                                  <span className="completion-text">{intern.completion_percentage}%</span>
+                          {internship.interns.map((intern, idx) => {
+                            const internId = getInternId(intern);
+                            return (
+                              <div key={idx} className="intern-item">
+                                <span className="intern-name">{intern.full_name}</span>
+                                <div className="intern-actions">
+                                  <div className="completion-badge">
+                                    <div className="mini-progress-ring">
+                                      <svg width="30" height="30">
+                                        <circle
+                                          cx="15"
+                                          cy="15"
+                                          r="12"
+                                          stroke="#e5e7eb"
+                                          strokeWidth="2"
+                                          fill="none"
+                                        />
+                                        <circle
+                                          cx="15"
+                                          cy="15"
+                                          r="12"
+                                          stroke="url(#mini-gradient)"
+                                          strokeWidth="2"
+                                          fill="none"
+                                          strokeDasharray={`${75.4 * (parseFloat(intern.completion_percentage) / 100)} 75.4`}
+                                          transform="rotate(-90 15 15)"
+                                        />
+                                        <defs>
+                                          <linearGradient id="mini-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#667eea" />
+                                            <stop offset="100%" stopColor="#764ba2" />
+                                          </linearGradient>
+                                        </defs>
+                                      </svg>
+                                      <span className="completion-text">{intern.completion_percentage}%</span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    className="unassign-btn"
+                                    onClick={() => handleUnassignIntern(internship.id, internId, intern.full_name)}
+                                    disabled={assigningInterns || !internId}
+                                    title={`Remove ${intern.full_name}`}
+                                    aria-label={`Remove ${intern.full_name} from internship`}
+                                  >
+                                    ✕
+                                  </button>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="no-interns">No interns assigned</p>
@@ -588,15 +729,10 @@ const HrDashboard = () => {
           </div>
         )}
 
-        {/* Add Intern Tab */}
         {activeTab === 'addIntern' && (
           <div className="form-section">
             <h2 className="section-title">Add New Intern</h2>
             <form onSubmit={handleCreateIntern} className="hr-form" autoComplete="off">
-              {/* Hidden fields to prevent autofill */}
-              <input type="text" style={{ display: 'none' }} />
-              <input type="password" style={{ display: 'none' }} />
-              
               <div className="form-group">
                 <label>Full Name</label>
                 <input
@@ -663,15 +799,10 @@ const HrDashboard = () => {
           </div>
         )}
 
-        {/* Add Supervisor Tab */}
         {activeTab === 'addSupervisor' && (
           <div className="form-section">
             <h2 className="section-title">Add New Supervisor</h2>
             <form onSubmit={handleCreateSupervisor} className="hr-form" autoComplete="off">
-              {/* Hidden fields to prevent autofill */}
-              <input type="text" style={{ display: 'none' }} />
-              <input type="password" style={{ display: 'none' }} />
-              
               <div className="form-group">
                 <label>Full Name</label>
                 <input
@@ -721,7 +852,6 @@ const HrDashboard = () => {
           </div>
         )}
 
-        {/* Create Internship Tab */}
         {activeTab === 'createInternship' && (
           <div className="form-section">
             <h2 className="section-title">Create New Internship Program</h2>
@@ -743,7 +873,8 @@ const HrDashboard = () => {
                   <input
                     type="date"
                     value={internshipForm.start_date}
-                    onChange={(e) => setInternshipForm({ ...internshipForm, start_date: e.target.value })}
+                    onChange={handleStartDateChange}
+                    min={getTodayDate()}
                     required
                   />
                 </div>
@@ -754,6 +885,8 @@ const HrDashboard = () => {
                     type="date"
                     value={internshipForm.end_date}
                     onChange={(e) => setInternshipForm({ ...internshipForm, end_date: e.target.value })}
+                    min={internshipForm.start_date ? getTomorrowDate(internshipForm.start_date) : getTodayDate()}
+                    disabled={!internshipForm.start_date}
                     required
                   />
                 </div>

@@ -2,19 +2,19 @@
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-  background-color: #f5f5f5;
+  background-color: #f7f6f4;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 50;
 }
 
-/* Header */
 .dashboard-header {
-  text-align: center;
+  text-align: center; 
   margin-bottom: 3rem;
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007562 0%, #2d3e36 100%);
   border-radius: 16px;
-  color: white;
+  color: #e0b670;
   position: relative;
 }
 
@@ -37,19 +37,18 @@
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(224, 182, 112, 0.2);
+  color: #e0b670;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
 }
 
 .logout-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(224, 182, 112, 0.3);
   transform: translateY(-2px);
 }
 
-/* Dashboard Grid */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -81,15 +80,14 @@
 }
 
 .card-title {
-  color: #333;
+  color: #007562;
   margin-bottom: 1.5rem;
   font-size: 1.3rem;
   font-weight: 600;
 }
 
-/* Program Info Card */
 .program-content h3 {
-  color: #667eea;
+  color: #007562;
   margin-bottom: 1rem;
   font-size: 1.2rem;
 }
@@ -117,10 +115,9 @@
 
 .date-value {
   font-weight: 600;
-  color: #333;
+  color: #007562;
 }
 
-/* Progress Card - Updated with Circle Design */
 .progress-content {
   display: flex;
   flex-direction: column;
@@ -163,7 +160,7 @@
   transform: translate(-50%, -50%);
   font-size: 1.8rem;
   font-weight: bold;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007562 0%, #2d3e36 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -193,15 +190,15 @@
 }
 
 .stat-row .stat-value.completed {
-  color: #10b981;
+  color: #007562;
 }
 
 .stat-row .stat-value.pending {
-  color: #f59e0b;
+  color: #e0b670;
 }
 
 .stat-row .stat-value.total {
-  color: #667eea;
+  color: #007562;
 }
 
 .stat-row .stat-label {
@@ -222,18 +219,17 @@
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #007562 0%, #2d3e36 100%);
+  color: #e0b670;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .view-tasks-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(72, 97, 89, 0.4);
 }
 
-/* Supervisor Card */
 .supervisor-content {
   display: flex;
   align-items: center;
@@ -245,8 +241,8 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #007562 0%, #2d3e36 100%);
+  color: #e0b670;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -262,7 +258,7 @@
 }
 
 .email-link {
-  color: #667eea;
+  color: #007562;
   text-decoration: none;
   font-size: 0.95rem;
   display: flex;
@@ -272,10 +268,9 @@
 }
 
 .email-link:hover {
-  color: #764ba2;
+  color: #2d3e36;
 }
 
-/* Evaluations Card */
 .evaluations-list {
   display: flex;
   flex-direction: column;
@@ -288,12 +283,12 @@
   padding: 1rem; 
   background: #f8f9fa;
   border-radius: 8px;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid #007562;
 }
 
 .evaluation-week {
   font-weight: 600;
-  color: #667eea;
+  color: #007562;
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
@@ -304,7 +299,6 @@
   line-height: 1.4;
 }
 
-/* Upload Card */
 .upload-card {
   grid-column: 1 / -1;
 }
@@ -332,7 +326,7 @@
 .file-label {
   display: block;
   padding: 0.75rem 1rem;
-  border: 2px dashed #667eea;
+  border: 2px dashed #007562;
   border-radius: 8px;
   color: #666;
   cursor: pointer;
@@ -343,7 +337,7 @@
 
 .file-label:hover {
   background: #e9ecef;
-  border-color: #764ba2;
+  border-color: #2d3e36;
 }
 
 .upload-btn {
@@ -352,8 +346,8 @@
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #007562 0%, #2d3e36 100%);
+  color: #e0b670;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
@@ -361,7 +355,7 @@
 
 .upload-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(72, 97, 89, 0.4);
 }
 
 .upload-status {
@@ -413,7 +407,6 @@
   padding: 2rem 0;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .intern-dashboard {
     padding: 1rem;
@@ -474,9 +467,7 @@
     font-size: 1.5rem;
   }
 }
-/* ... (keep all existing styles) ... */
 
-/* Updated Document Upload Styles */
 .upload-form {
   display: flex;
   flex-direction: column;
@@ -498,26 +489,27 @@
   width: 100%; 
   text-align: left;
   padding: 0.75rem 1rem;
-  border: 2px dashed #667eea;
+  border: 2px dashed #007562;
   border-radius: 8px;
   font-size: 1rem;
   background: #f8f9fa;
   color: #666;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 50;
 }
 
 .document-type-select:hover {
-  background: #e9ecef;
-  border-color: #764ba2;
+  background: #e9ecef; 
+  border-color: #2d3e36;
 }
 
 .document-type-select:focus {
   outline: none;
-  border-color: #764ba2;
+  border-color: #2d3e36;
   background: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(72, 97, 89, 0.1);
 }
 
 .file-input-wrapper {
@@ -537,7 +529,7 @@
 .file-label {
   display: block;
   padding: 0.75rem 1rem;
-  border: 2px dashed #667eea;
+  border: 2px dashed #007562;
   border-radius: 8px;
   color: #666;
   cursor: pointer;
@@ -551,7 +543,7 @@
 
 .file-label:hover {
   background: #e9ecef;
-  border-color: #764ba2;
+  border-color: #2d3e36;
 }
 
 .upload-btn {
@@ -560,8 +552,8 @@
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #007562 0%, #2d3e36 100%);
+  color: #e0b670;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
@@ -570,7 +562,7 @@
 
 .upload-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(72, 97, 89, 0.4);
 }
 
 .upload-status {
@@ -591,7 +583,6 @@
   color: #721c24;
 }
 
-/* Recent Documents with Badges */
 .recent-documents {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
@@ -618,8 +609,8 @@
 }
 
 .doc-type-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #007562 0%, #2d3e36 100%);
+  color: #e0b670;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.8rem;
@@ -630,9 +621,10 @@
 .doc-date {
   color: #888;
   font-size: 0.85rem;
+  margin-left: auto;
+  text-align: right;
 }
 
-/* Responsive Design for Upload Section */
 @media (max-width: 768px) {
   .upload-inputs {
     flex-direction: column;
@@ -655,17 +647,17 @@
     gap: 0.5rem; 
   } 
 }
-/* Add to existing InternDashboard.css */
 
-/* Not Enrolled State */
 .not-enrolled-card {
   background: white;
   border-radius: 16px;
-  padding: 4rem 2rem;
+  padding: 2.5rem 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   text-align: center;
   max-width: 600px;
-  margin: 2rem auto;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  margin: auto;
 }
 
 .not-enrolled-icon {
@@ -675,7 +667,7 @@
 }
 
 .not-enrolled-card h2 {
-  color: #333;
+  color: #007562;
   font-size: 2rem;
   margin-bottom: 1rem;
 }
@@ -684,41 +676,22 @@
   color: #666;
   font-size: 1.1rem;
   line-height: 1.5;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
 }
 
 .not-enrolled-subtext {
   font-size: 0.95rem !important;
   color: #999 !important;
   margin-top: 1rem !important;
-  margin-bottom: 2rem !important;
 }
 
-.browse-programs-btn {
-  padding: 0.875rem 2rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.browse-programs-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-/* Completion Celebration Card */
 .completion-celebration-card {
-  background: linear-gradient(135deg, #10b98115 0%, #34d39915 100%);
-  border: 2px solid #10b981;
+  background: linear-gradient(135deg, rgba(72, 97, 89, 0.08) 0%, rgba(90, 122, 110, 0.08) 100%);
+  border: 2px solid #007562;
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 4px 12px rgba(72, 97, 89, 0.15);
   animation: slideDown 0.5s ease-out;
 }
 
@@ -749,14 +722,14 @@
 }
 
 .completion-celebration-card h2 {
-  color: #059669;
+  color: #007562;
   font-size: 2rem;
   margin-bottom: 1rem;
   font-weight: 700;
 }
 
 .celebration-text {
-  color: #064e3b;
+  color: #2d3e36;
   font-size: 1.1rem;
   line-height: 1.5;
   margin-bottom: 2rem;
@@ -787,7 +760,7 @@
 .stat-number {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #10b981;
+  color: #007562;
   line-height: 1;
 }
 
@@ -819,38 +792,15 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
-
-.completion-btn.download-cert {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.completion-btn.download-cert:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
 .completion-btn.email-cert {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  color: white;
+  background: linear-gradient(135deg, #007562 0%, #5a7a6e 100%);
+  color: #e0b670;
 }
 
 .completion-btn.email-cert:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6px 20px rgba(72, 97, 89, 0.4);
 }
-
-.completion-btn.unenroll {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-}
-
-.completion-btn.unenroll:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .celebration-stats {
     flex-direction: column;
@@ -874,4 +824,102 @@
   .completion-celebration-card h2 {
     font-size: 1.5rem; 
   }
+}
+
+.status-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out, slideOut 0.3s ease-out 2.7s forwards;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-notification.success {
+  background: linear-gradient(135deg, #007562, #5a7a6e);
+  color: white;
+  border: 1px solid rgba(224, 182, 112, 0.2);
+}
+
+.status-notification.error {
+  background: linear-gradient(135deg, #8b4c47, #a85f59);
+  color: white;
+  border: 1px solid rgba(224, 182, 112, 0.2);
+}
+
+.status-notification.info {
+  background: linear-gradient(135deg, #5a6b7a, #6e8395);
+  color: white;
+  border: 1px solid rgba(224, 182, 112, 0.2);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-notification {
+    left: 20px;
+    right: 20px;
+    top: auto;
+    bottom: 20px; 
+    animation: slideUp 0.3s ease-out, slideDown 0.3s ease-out 2.7s forwards;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+  }
+}
+
+.card-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #999;
+  font-style: italic; 
+  font-size: 0.9rem; 
 }

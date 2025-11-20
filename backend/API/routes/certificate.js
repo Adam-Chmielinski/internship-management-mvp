@@ -167,7 +167,7 @@ router.post('/:internId', async (req, res) => {
         doc.fontSize(13)
         .fillColor('#333333')
         .font('Helvetica')
-        .text('has successfully completed the internship program', 0, 290, {
+        .text(`has successfully completed the internship program`, 0, 290, {
             align: 'center',
             width: pageWidth
         });
@@ -176,7 +176,7 @@ router.post('/:internId', async (req, res) => {
         doc.fontSize(16)
         .fillColor('#1e3a5f')
         .font('Helvetica-Bold')
-        .text(internData.training_sector.toUpperCase(), 0, 315, {
+        .text(internData.program_name.toUpperCase(), 0, 315, {
             align: 'center',
             width: pageWidth
         });

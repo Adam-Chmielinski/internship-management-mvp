@@ -47,7 +47,7 @@ function ActivityChecklist({ participantId }) {
         setTasks(data);
       } catch (err) {
         console.error('Error fetching tasks:', err);
-        setTasks([]); // Set to empty array on error
+        setTasks([]); 
       } finally {
         setLoading(false);
       }
@@ -74,7 +74,6 @@ function ActivityChecklist({ participantId }) {
         throw new Error('Failed to update');
       }
 
-      // Update the task in the state
       setTasks(currentTasks => 
         currentTasks.map(task =>
           task.assignment_id === task_id ? { ...task, status: newStatus } : task
@@ -137,12 +136,10 @@ function ActivityChecklist({ participantId }) {
 
   return (
     <div className="checklist-container">
-      {/* Back Button */}
       <button onClick={handleGoBack} className="back-to-dashboard-btn">
         ← Back to Dashboard
       </button>
 
-      {/* Task Stats Overview */}
       <div className="task-stats-grid">
         <div className="task-stat-card">
           <span className="stat-icon">📋</span>
@@ -174,7 +171,6 @@ function ActivityChecklist({ participantId }) {
         </div>
       </div>
 
-      {/* progress Bar */}
       <div className="overall-progress">
         <div className="progress-header">
           <h3>Overall progress</h3>
@@ -194,7 +190,6 @@ function ActivityChecklist({ participantId }) {
         </div>
       </div>
 
-      {/* Filter Tabs */}
       <div className="task-filters">
         <button 
           className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
@@ -222,7 +217,6 @@ function ActivityChecklist({ participantId }) {
         </button>
       </div>
 
-      {/* Tasks List */}
       <div className="tasks-list-container">
         <h3 className="list-title">Task Details</h3>
         {filteredTasks.length === 0 ? (
