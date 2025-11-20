@@ -4,6 +4,10 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { authenticateToken } = require('../auth');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { error } = require('console');
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -168,10 +172,36 @@ router.patch('/unassignIntern', authenticateToken, async(req, res) => {
     try {
         await pool.query(`
             DELETE FROM "Intern_Activities" WHERE participant_id = $1
-            `,[intern_id])
+            `,[intern_id]);
 
         await pool.query(`
-            UPDATE "Interns" SET program_id = NULL WHERE id = $1
+            DELETE FROM "Weekly_Monitoring" WHERE participant_id = $1
+            `,[intern_id]);
+
+
+        const files = await pool.query(`
+            SELECT * FROM "Documents" WHERE intern_id = $1
+            `,[intern_id]);
+
+        await Promise.all(
+            files.rows.map(async (element) => {
+                const absolutePath = path.join(__dirname, element.file_path);
+
+                fs.unlink(absolutePath, (err) => {
+                    if(err) {
+                        return res.status(500).json({error: 'Failed to delete file'});
+                    }
+                    res.status(204).json({message: 'File deleted successfully'});
+                });
+            })
+        );
+
+        await pool.query(`
+            DELETE FROM "Documents" WHERE intern_id = $1
+            `,[intern_id]);
+
+        await pool.query(`
+            UPDATE "Interns" SET program_id = NULL, tutor_final_approval = false WHERE id = $1
             `,[intern_id]);
 
         return res.status(201).json({
