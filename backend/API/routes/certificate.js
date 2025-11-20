@@ -58,6 +58,13 @@ router.post('/:internId', async (req, res) => {
             }
         });
 
+        const fontsPath = path.join(__dirname, '../fonts');
+        
+        // Register fonts with Polish support
+        doc.registerFont('RedHatDisplay-Italic', path.join(fontsPath, 'RedHatDisplay-Italic.ttf'));
+        doc.registerFont('RedHatDisplay', path.join(fontsPath, 'RedHatDisplay-Regular.ttf'));
+        doc.registerFont('RedHatDisplay-Bold', path.join(fontsPath, 'RedHatDisplay-SemiBold.ttf'));
+
         const timestamp = Date.now();
         const filename = `certificate_intern_${internId}_${timestamp}.pdf`;
         const relativePath = (`docs/${filename}`);
@@ -107,7 +114,7 @@ router.post('/:internId', async (req, res) => {
         // Organization name (small, top)
         doc.fontSize(11)
         .fillColor('#666666')
-        .font('Helvetica')
+        .font('RedHatDisplay')
         .text('YUDAYA S.L.', 0, 70, {
             align: 'center',
             width: pageWidth
@@ -124,7 +131,7 @@ router.post('/:internId', async (req, res) => {
         // 4. MAIN TITLE
         doc.fontSize(42)
         .fillColor('#1e3a5f')
-        .font('Helvetica-Bold')
+        .font('RedHatDisplay-Bold')
         .text('CERTIFICATE', 0, 120, {
             align: 'center',
             width: pageWidth
@@ -132,7 +139,7 @@ router.post('/:internId', async (req, res) => {
 
         doc.fontSize(20)
         .fillColor('#1e3a5f')
-        .font('Helvetica')
+        .font('RedHatDisplay')
         .text('OF COMPLETION', 0, 170, {
             align: 'center',
             width: pageWidth
@@ -148,7 +155,7 @@ router.post('/:internId', async (req, res) => {
         // 6. RECIPIENT NAME (Large, prominent)
         doc.fontSize(32)
         .fillColor('#1e3a5f')
-        .font('Helvetica-Bold')
+        .font('RedHatDisplay-Bold')
         .text(internData.intern_name.toUpperCase(), 0, 230, {
             align: 'center',
             width: pageWidth
@@ -166,7 +173,7 @@ router.post('/:internId', async (req, res) => {
         // 7. ACHIEVEMENT DETAILS
         doc.fontSize(13)
         .fillColor('#333333')
-        .font('Helvetica')
+        .font('RedHatDisplay')
         .text(`has successfully completed the internship program`, 0, 290, {
             align: 'center',
             width: pageWidth
@@ -175,7 +182,7 @@ router.post('/:internId', async (req, res) => {
         // Training sector (highlighted)
         doc.fontSize(16)
         .fillColor('#1e3a5f')
-        .font('Helvetica-Bold')
+        .font('RedHatDisplay-Bold')
         .text(internData.program_name.toUpperCase(), 0, 315, {
             align: 'center',
             width: pageWidth
@@ -205,7 +212,7 @@ router.post('/:internId', async (req, res) => {
         // Duration text
         doc.fontSize(11)
         .fillColor('#333333')
-        .font('Helvetica')
+        .font('RedHatDisplay')
         .text(`Duration: ${startDate} - ${endDate}`, boxX, boxY + 15, {
             align: 'center',
             width: boxWidth
@@ -224,7 +231,7 @@ router.post('/:internId', async (req, res) => {
         // 9. COMMENDATION TEXT
         doc.fontSize(11)
         .fillColor('#666666')
-        .font('Helvetica-Oblique')
+        .font('RedHatDisplay-Oblique')
         .text('In recognition of dedication, professional growth, and successful completion', 0, 440, {
             align: 'center',
             width: pageWidth
@@ -250,7 +257,7 @@ router.post('/:internId', async (req, res) => {
         // Left signature text
         doc.fontSize(9)
         .fillColor('#666666')
-        .font('Helvetica-Bold')
+        .font('RedHatDisplay-Bold')
         .text('Program Supervisor signature', leftSignatureX, signatureY + 10, {
             width: signatureWidth,
             align: 'center'
@@ -266,7 +273,7 @@ router.post('/:internId', async (req, res) => {
         // Right signature text
         doc.fontSize(9)
         .fillColor('#666666')
-        .font('Helvetica-Bold')
+        .font('RedHatDisplay-Bold')
         .text('HR signature and stamp', rightSignatureX, signatureY + 10, {
             width: signatureWidth,
             align: 'center'
@@ -279,7 +286,7 @@ router.post('/:internId', async (req, res) => {
         const certificateId = `CERT-${new Date().getFullYear()}-${String(internId).padStart(4, '0')}`;
         doc.fontSize(8)
         .fillColor('#999999')
-        .font('Helvetica')
+        .font('RedHatDisplay')
         .text(`${certificateId}`, 60, footerY);
 
         // Issue date
