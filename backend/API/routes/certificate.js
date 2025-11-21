@@ -231,7 +231,7 @@ router.post('/:internId', async (req, res) => {
         // 9. COMMENDATION TEXT
         doc.fontSize(11)
         .fillColor('#666666')
-        .font('RedHatDisplay-Oblique')
+        .font('RedHatDisplay-Italic')
         .text('In recognition of dedication, professional growth, and successful completion', 0, 440, {
             align: 'center',
             width: pageWidth
