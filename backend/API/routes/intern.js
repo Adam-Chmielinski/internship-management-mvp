@@ -148,7 +148,7 @@ router.get('/:internId/documents', authenticateToken, async (req, res) => {
                 upload_date
                 FROM "Documents"
                 WHERE intern_id = $1
-                ORDER BY upload_date DESC LIMIT 5`,
+                ORDER BY id DESC`,
             [internId]
         );
 
