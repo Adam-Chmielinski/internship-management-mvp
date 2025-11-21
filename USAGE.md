@@ -55,6 +55,15 @@ npm start
 
 If `react-scripts` cannot be found, run `npm install` in the frontend folder to restore dependencies.
 
+Whole project (from repo root):
+
+```bash
+npm install
+npm run install-all
+npm run dev
+```
+
+
 ## Authentication
 Login endpoint:
 - POST `/API/login` (body JSON `{ email, password }`) — responds with JSON `{ token, id, role }`.
