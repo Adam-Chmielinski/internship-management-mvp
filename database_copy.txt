@@ -1,0 +1,148 @@
+CREATE TABLE "Supervisor" (
+  "id" serial,
+  "full_name" text,
+  "email" text,
+  "password" text,
+  PRIMARY KEY ("id")
+);
+ 
+CREATE TABLE "HR" (
+  "id" serial,
+  "full_name" text,
+  "email" text,
+  "password" text,
+  PRIMARY KEY ("id")
+);
+ 
+CREATE TABLE "Internship_Programs" (
+  "id" serial,
+  "program_name" text,
+  "start_date" date,
+  "end_date" date,
+  "host_org_id" integer,
+  "supervisor_id" integer,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "FK_Internship_Programs_host_org_id"
+    FOREIGN KEY ("host_org_id")
+      REFERENCES "HR"("id"),
+  CONSTRAINT "FK_Internship_Programs_supervisor_id"
+    FOREIGN KEY ("supervisor_id")
+      REFERENCES "Supervisor"("id")
+);
+ 
+CREATE TABLE "Activities" (
+  "id" serial,
+  "program_id" integer,
+  "function_description" text,
+  "activity_type" ENUM,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "FK_Activities_program_id"
+    FOREIGN KEY ("program_id")
+      REFERENCES "Internship_Programs"("id")
+);
+ 
+CREATE TABLE "Interns" (
+  "id" serial,
+  "full_name" text,
+  "training_sector" text,
+  "program_id" integer,
+  "tutor_final_approval" boolean,
+  "login" text,
+  "password" text,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "FK_Interns_program_id"
+    FOREIGN KEY ("program_id")
+      REFERENCES "Internship_Programs"("id")
+);
+ 
+CREATE TABLE "Weekly_Monitoring" (
+  "id" serial,
+  "participant_id" integer,
+  "tutor_id" integer,
+  "tutor_id" integer,
+  "tutor_evaluation" text,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "FK_Weekly_Monitoring_participant_id"
+    FOREIGN KEY ("participant_id")
+      REFERENCES "Interns"("id"),
+  CONSTRAINT "FK_Weekly_Monitoring_tutor_id"
+    FOREIGN KEY ("tutor_id")
+      REFERENCES "Supervisor"("id")
+);
+ 
+CREATE TABLE "Intern_Activities" (
+  "id" serial,
+  "participant_id" integer,
+  "activity_id" integer,
+  "status" ENUM,
+  "completion_date" date,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "FK_Intern_Activities_participant_id"
+    FOREIGN KEY ("participant_id")
+      REFERENCES "Interns"("id"),
+  CONSTRAINT "FK_Intern_Activities_activity_id"
+    FOREIGN KEY ("activity_id")
+      REFERENCES "Activities"("id")
+);
+ 
+CREATE TABLE "Documents" (
+  "id" serial,
+  "intern_id" integer,
+  "doc_type" Type,
+  "file_path" text,
+  "upload_date" date,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "FK_Documents_intern_id"
+    FOREIGN KEY ("intern_id")
+      REFERENCES "Interns"("id")
+);
+
+INSERT INTO "HR" (full_name,email,password) VALUES ('Yudaya HR','hr@yudaya.com','$2b$10$kBLanu9WTOPHRqgntTkdN.2atkE/PztsCKE7lcsidlrnHErcE1bXC');
+
+INSERT INTO "Activities" (id, function_description, activity_type, training_sector) VALUES
+(47, 'Assist in assembling electro-mechanical systems according to technical drawings and wiring diagrams.', 'Technical', 'Mechatronics'),
+(48, 'Wire and test small automation control cabinets under the supervision of a technician.', 'Technical', 'Mechatronics'),
+(49, 'Program and simulate basic PLC routines for simple sequential control tasks.', 'Technical', 'Mechatronics'),
+(50, 'Calibrate common industrial sensors and document calibration results.', 'Technical', 'Mechatronics'),
+(51, 'Perform scheduled preventive maintenance on training machines, including functional safety checks, and record findings.', 'Safety', 'Mechatronics'),
+(52, 'Use CAD software to create or update simple component and assembly drawings.', 'Technical', 'Mechatronics'),
+(53, 'Diagnose electrical faults in training rigs using multimeters and diagnostic tools.', 'Technical', 'Mechatronics'),
+(54, 'Install and align motors, gearboxes and couplings for small conveyor systems.', 'Technical', 'Mechatronics'),
+(55, 'Assemble and test pneumatic circuits on laboratory training panels.', 'Technical', 'Mechatronics'),
+(56, 'Assemble and test hydraulic circuits on educational test benches.', 'Technical', 'Mechatronics'),
+(57, 'Configure frequency inverters for basic motor speed control applications.', 'Technical', 'Mechatronics'),
+(58, 'Assist in setting up industrial fieldbus or Ethernet-based communication between devices.', 'Technical', 'Mechatronics'),
+(59, 'Integrate and test safety components such as emergency stops, guards and light barriers in training setups.', 'Safety', 'Mechatronics'),
+(60, 'Configure and test HMI panels for simple operator interfaces.', 'Technical', 'Mechatronics'),
+(61, 'Support commissioning of small automated workstations and verify correct operation.', 'Technical', 'Mechatronics'),
+(62, 'Participate in troubleshooting recurring machine errors and propose corrective actions.', 'Technical', 'Mechatronics'),
+(63, 'Support 3D printing of prototype parts including printer setup and basic post processing.', 'Technical', 'Mechatronics'),
+(64, 'Assist in implementing basic closed-loop control tasks and tuning simple PID parameters.', 'Technical', 'Mechatronics'),
+(65, 'Measure electrical and mechanical signals (voltage, current, speed, vibration) and document results in standard forms.', 'Technical', 'Mechatronics'),
+(66, 'Apply workplace safety and environmental procedures (lockout/tagout, PPE, waste handling) during all practical activities.', 'Safety', 'Mechatronics'),
+(67, 'Prepare clear technical documentation for performed modifications and maintenance tasks.', 'Soft', 'Mechatronics'),
+(68, 'Participate in team meetings, communicate progress and present results on assigned technical tasks.', 'Soft', 'Mechatronics'),
+(69, 'Assist in managing spare parts and tools inventory for training and laboratory equipment in an organized way.', 'Soft', 'Mechatronics'),
+(70, 'Install and configure desktop or laptop operating systems in a test environment.', 'Technical', 'IT'),
+(71, 'Set up user accounts, groups and basic access rights according to given instructions.', 'Technical', 'IT'),
+(72, 'Assist in developing a small web page using HTML, CSS and basic JavaScript.', 'Technical', 'IT'),
+(73, 'Implement simple backend functionality for a demo application under supervision.', 'Technical', 'IT'),
+(74, 'Use Git to clone repositories, create branches, commit changes and push to a remote.', 'Technical', 'IT'),
+(75, 'Document tasks, bugs and feature requests in an issue tracking or ticketing system.', 'Soft', 'IT'),
+(76, 'Design a small relational database schema and draw an entity relationship diagram.', 'Technical', 'IT'),
+(77, 'Write basic SQL queries to insert, update and retrieve data from a training database.', 'Technical', 'IT'),
+(78, 'Participate in code reviews and improve code quality based on received feedback.', 'Soft', 'IT'),
+(79, 'Create and run unit tests for existing functions or modules in a training project.', 'Technical', 'IT'),
+(80, 'Provide first level support for common user problems and record support cases politely and clearly.', 'Soft', 'IT'),
+(81, 'Assist in configuring switches and routers for small local area networks in the lab.', 'Technical', 'IT'),
+(82, 'Monitor system or application logs and identify obvious errors or warnings.', 'Technical', 'IT'),
+(83, 'Apply security updates and antivirus scans on workstations following defined procedures.', 'Safety', 'IT'),
+(84, 'Write simple scripts to automate repetitive administrative or data processing tasks.', 'Technical', 'IT'),
+(85, 'Assist in designing user interface mockups with a graphical prototyping tool.', 'Technical', 'IT'),
+(86, 'Carry out basic functional and usability testing of web or mobile applications.', 'Technical', 'IT'),
+(87, 'Perform data backup and restore procedures using standard backup tools.', 'Safety', 'IT'),
+(88, 'Prepare and update technical documentation such as installation and user guides.', 'Soft', 'IT'),
+(89, 'Assist in deploying applications to a test or staging server and verify deployment.', 'Technical', 'IT'),
+(90, 'Participate in agile meetings (daily stand-ups, retrospectives) and reflect on personal learning progress.', 'Soft', 'IT'),
+(91, 'Research an emerging IT topic and present a short summary to the team.', 'Soft', 'IT'),
+(92, 'Follow organizational data protection and cybersecurity rules when handling personal or test data.', 'Safety', 'IT');
