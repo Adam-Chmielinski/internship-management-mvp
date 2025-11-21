@@ -9,13 +9,11 @@ const Monitoring = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   
-  // Separate states for each endpoint
   const [profile, setProfile] = useState(null);
   const [progress, setProgress] = useState(null);
   const [monitoring, setMonitoring] = useState([]);
   const [documents, setDocuments] = useState([]);
   
-  // Loading states for each section
   const [loadingStates, setLoadingStates] = useState({
     profile: true,
     progress: true,
@@ -32,7 +30,6 @@ const Monitoring = () => {
     setTimeout(() => setStatusMessage({ text: '', type: '' }), 3000);
   };
 
-  // Fetch profile data
   const fetchProfileData = async () => {
     try {
       setLoadingStates(prev => ({ ...prev, profile: true }));
@@ -55,7 +52,6 @@ const Monitoring = () => {
     }
   };
 
-  // Fetch progress data
   const fetchProgressData = async () => {
     try {
       setLoadingStates(prev => ({ ...prev, progress: true }));
@@ -78,7 +74,6 @@ const Monitoring = () => {
     }
   };
 
-  // Fetch monitoring data (evaluations)
   const fetchMonitoringData = async () => {
     try {
       setLoadingStates(prev => ({ ...prev, monitoring: true }));
@@ -94,7 +89,6 @@ const Monitoring = () => {
         const data = await response.json();
         console.log('Monitoring data received:', data);
         
-        // Extract monitoring array from response
         const monitoringArray = data.monitoring || data.evaluations || data.data || [];
         setMonitoring(monitoringArray);
       }
@@ -106,7 +100,6 @@ const Monitoring = () => {
     }
   };
 
-  // Fetch documents data
   const fetchDocumentsData = async () => {
     try {
       setLoadingStates(prev => ({ ...prev, documents: true }));
@@ -122,7 +115,6 @@ const Monitoring = () => {
         const data = await response.json();
         console.log('Documents data received:', data);
         
-        // Extract documents array from response
         const documentsArray = data.documents || data.data || [];
         setDocuments(documentsArray);
       }
@@ -134,7 +126,6 @@ const Monitoring = () => {
     }
   };
 
-  // Fetch task stats from supervisor endpoint
   const fetchTaskStats = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -150,7 +141,6 @@ const Monitoring = () => {
         const total = tasks.length;
         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
         
-        // Update progress state with task stats
         setProgress(prev => ({
           ...prev,
           completed_tasks: completed,
@@ -165,7 +155,6 @@ const Monitoring = () => {
     }
   };
 
-  // Initial load - fetch all data
   useEffect(() => {
     fetchProfileData();
     fetchProgressData();
@@ -198,7 +187,6 @@ const Monitoring = () => {
       if (response.ok) {
         showStatus('✓ Weekly evaluation submitted successfully!', 'success');
         setWeeklyEvaluation('');
-        // Only refresh monitoring data, not everything
         await fetchMonitoringData();
       } else {
         throw new Error('Failed to submit evaluation');
@@ -211,7 +199,6 @@ const Monitoring = () => {
     }
   };
 
-  // Check if all requirements are met for completion
   const areAllRequirementsMet = () => {
     const hasDocuments = documents.length > 0;
     const hasEvaluations = monitoring.length > 0;
@@ -345,7 +332,6 @@ const Monitoring = () => {
     return iconMap[docType] || '📄';
   };
 
-  // Check if initial load is complete
   const isInitialLoading = loadingStates.profile;
 
   if (isInitialLoading) {
@@ -415,7 +401,6 @@ const Monitoring = () => {
       </div>
 
       <div className="monitoring-grid">
-        {/* Program Completed Card - Only show when approved */}
         {isProgramCompleted && (
           <div className="completion-celebration-card">
             <div className="celebration-content">
@@ -451,7 +436,6 @@ const Monitoring = () => {
           </div>
         )}
 
-        {/* Submit Weekly Evaluation - Hide when approved */}
         {!isProgramCompleted && (
           <div className="monitoring-card evaluation-input-card">
             <div className="card-icon">📝</div>
@@ -598,7 +582,6 @@ const Monitoring = () => {
           )}
         </div>
 
-        {/* Program Completion Card - Hide when approved */}
         {!isProgramCompleted && (
           <div className="monitoring-card completion-card">
             <div className="card-icon">🎓</div>

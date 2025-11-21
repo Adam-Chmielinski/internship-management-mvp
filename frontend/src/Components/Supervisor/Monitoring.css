@@ -880,7 +880,7 @@
   }
 }
 .completion-celebration-card {
-  grid-column: 1 / -1; /* Add this line to span full width */
+  grid-column: 1 / -1; 
   background: linear-gradient(135deg, rgba(72, 97, 89, 0.08) 0%, rgba(90, 122, 110, 0.08) 100%);
   border: 2px solid #007562;
   border-radius: 16px;
@@ -1042,12 +1042,10 @@
     font-size: 1.5rem; 
   }
 }
-/* Make documents card full width when program is completed */
 .documents-card.full-width {
   grid-column: 1 / -1;
 }
 
-/* Make evaluations card taller when program is completed */
 .evaluations-card.expanded-height .evaluations-content {
   min-height: calc(100% + 50px);
 }
